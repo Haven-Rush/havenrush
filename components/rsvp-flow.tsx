@@ -1,0 +1,125 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+
+type Timeline = "JUST_LOOKING" | "MOVING_SOON";
+type Intent = "BUYING" | "RENTING";
+
+const TIMELINE_OPTIONS: { value: Timeline; label: string }[] = [
+  { value: "JUST_LOOKING", label: "Just looking" },
+  { value: "MOVING_SOON", label: "Moving soon" },
+];
+
+const INTENT_OPTIONS: { value: Intent; label: string }[] = [
+  { value: "BUYING", label: "Buying" },
+  { value: "RENTING", label: "Renting" },
+];
+
+/**
+ * Phase 1: visual flow only, local state. Phase 4 wires "Continue" to
+ * POST /api/rsvp (with email + consent) and links to the real pass token
+ * it returns instead of the demo passport below.
+ */
+export function RsvpFlow({ demoPassportToken }: { demoPassportToken: string }) {
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [timeline, setTimeline] = useState<Timeline>("JUST_LOOKING");
+  const [intent, setIntent] = useState<Intent>("BUYING");
+
+  if (step === 0) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-charcoal/8 bg-linen p-6">
+        <div className="font-serif text-[22px] font-bold">$0 Free Pass</div>
+        <button
+          onClick={() => setStep(1)}
+          className="rounded-full bg-sage px-7 py-[13px] text-sm font-bold text-linen hover:bg-sage-dark"
+        >
+          Get Pass
+        </button>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div className="rounded-2xl border border-sage/20 bg-linen p-6">
+        <h3 className="mb-[18px] font-serif text-[17px] font-bold">Quick preferences</h3>
+
+        <PillGroup
+          label="Timeline"
+          options={TIMELINE_OPTIONS}
+          value={timeline}
+          onChange={setTimeline}
+          marginClass="mb-[18px]"
+        />
+        <PillGroup
+          label="Type"
+          options={INTENT_OPTIONS}
+          value={intent}
+          onChange={setIntent}
+          marginClass="mb-[22px]"
+        />
+
+        <button
+          onClick={() => setStep(2)}
+          className="rounded-full bg-sage px-[26px] py-[13px] text-[13px] font-bold text-linen hover:bg-sage-dark"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl bg-sage p-7 text-center text-linen">
+      <div className="mx-auto mb-[14px] flex h-10 w-10 items-center justify-center rounded-full bg-honey text-lg font-extrabold text-charcoal">
+        ✓
+      </div>
+      <h3 className="mb-[18px] font-serif text-xl font-bold">You&apos;re in.</h3>
+      <Link
+        href={`/passport/${demoPassportToken}`}
+        className="inline-block rounded-full bg-honey px-6 py-3 text-[13px] font-bold text-charcoal no-underline hover:brightness-95"
+      >
+        View Mobile Passport
+      </Link>
+    </div>
+  );
+}
+
+function PillGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  marginClass,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  marginClass: string;
+}) {
+  return (
+    <div className={marginClass}>
+      <div className="mb-2 text-xs font-bold text-charcoal/60">{label}</div>
+      <div className="flex gap-2.5">
+        {options.map((option) => {
+          const active = option.value === value;
+          return (
+            <button
+              key={option.value}
+              onClick={() => onChange(option.value)}
+              className={`rounded-full px-[18px] py-2.5 text-[13px] font-bold ${
+                active
+                  ? "bg-sage text-linen"
+                  : "border border-charcoal/15 bg-white text-charcoal/80"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

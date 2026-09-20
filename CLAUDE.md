@@ -13,7 +13,7 @@ Haven Rush is an event marketing platform that turns home discovery into neighbo
 - `docs/business-plan.md` — products, customers, revenue model, launch plan.
 
 ## Stack (decided)
-Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. SQLite for local dev, Postgres for production. Real URLs replace the mockup's view switching.
+Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. Postgres via Supabase for both local dev and production (no SQLite) — `DATABASE_URL` is the pooled connection (port 6543, used at runtime) and `DIRECT_URL` is the direct connection (used by Prisma Migrate). Hosted on Vercel — no Cloudflare-specific adapters. Real URLs replace the mockup's view switching.
 
 | Mockup view | Route |
 |---|---|
@@ -46,3 +46,13 @@ The mockup's events are set in Austin, TX (South Congress, Bouldin Creek, Hyde P
 
 ## Working style
 Build in phases; after each, run it, summarize what works, and stop for review before the next. Prefer small, tested pieces. Note anything you assumed in `DECISIONS.md`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
