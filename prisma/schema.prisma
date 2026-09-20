@@ -19,8 +19,9 @@ datasource db {
 
 enum EventType {
   HOUSE_PARTY
-  HOME_CRAWL
+  HOME_HUNT
   OPEN_HOUSE_WEEKEND
+  HOME_FAIR
 }
 
 enum StopKind {

@@ -1,5 +1,37 @@
 # Decisions & assumptions
 
+## Event types: Home Crawl renamed to Home Hunt, Home Fair restored (2026-09-21)
+Per explicit instruction, renamed `HOME_CRAWL` to `HOME_HUNT` everywhere
+(enum, `lib/event-types.ts`, seed data ids/slugs/titles, UI copy — "Find a
+Hunt", "Upcoming hunts", "South Congress Tasting Hunt", "Hyde Park Porch
+Hunt") and restored `HOME_FAIR` as a fourth event type with new
+builder-hosted-market copy, reversing the previous decision below to retire
+it. There are now four event types: House Party, Home Hunt, Open House
+Weekend, Home Fair.
+
+The home page shows House Party / Home Hunt / Open House Weekend as the
+three equal-sized main cards, with a smaller "For builders" card for Home
+Fair below them (per instruction). `/agents` now has a package card for
+all four types.
+
+Added a placeholder Home Fair seed event, "Mueller New Home Market"
+(Mueller is a real Austin master-planned community known for new
+construction — fits the "builder-hosted market" framing), with five
+LISTING-only stops representing builder model homes plus a coffee cart and
+a food-truck stop. Its LISTING stops use `brokerage`/`agentName` loosely to
+mean "builder name" / "on-site sales team" rather than a licensed
+third-party brokerage — the Stop model has no separate "builder" concept,
+and adding one felt like scope creep for placeholder data; flagging this
+as a modeling shorthand rather than a schema change.
+
+Migration `20260921120000_rename_home_crawl_add_home_fair` renames the
+`HOME_CRAWL` enum value in place (Postgres supports `ALTER TYPE ... RENAME
+VALUE`, a metadata-only change — existing rows read as the new label with
+no data migration needed) and adds `HOME_FAIR` back with `ALTER TYPE ...
+ADD VALUE` (natively supported, unlike removal). The migration doesn't use
+the new value anywhere in the same file, since Postgres disallows using a
+freshly added enum value within the transaction that added it.
+
 ## Event type: Home Fair retired, replaced by Open House Weekend (2026-09-20)
 Per explicit instruction, removed `HOME_FAIR` everywhere (home page card,
 events feed, seed data, `/agents`, the `EventType` enum) and replaced its

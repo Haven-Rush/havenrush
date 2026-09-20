@@ -22,14 +22,14 @@ export default function HomePage() {
             href="/events"
             className="whitespace-nowrap rounded-[11px] bg-sage px-6 py-3 text-[13px] font-bold text-linen no-underline hover:bg-sage-dark"
           >
-            Find a Crawl
+            Find a Hunt
           </Link>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24 pt-4 sm:px-8">
+      <section className="mx-auto max-w-6xl px-6 pt-4 sm:px-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {EVENT_TYPE_ORDER.map((type) => (
+          {EVENT_TYPE_ORDER.filter((type) => type !== "HOME_FAIR").map((type) => (
             <div key={type} className="rounded-[18px] border border-charcoal/8 bg-white p-7">
               <div className="mb-3.5 text-[11px] font-extrabold uppercase tracking-wide text-honey-text">
                 {EVENT_TYPES[type].label}
@@ -39,6 +39,18 @@ export default function HomePage() {
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-24 pt-6 sm:px-8">
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-charcoal/8 bg-white px-6 py-5">
+          <div className="text-[11px] font-extrabold uppercase tracking-wide text-honey-text">
+            For builders
+          </div>
+          <div className="text-[13px] font-bold text-charcoal">{EVENT_TYPES.HOME_FAIR.label}</div>
+          <p className="m-0 flex-1 text-[13px] leading-relaxed text-charcoal/65">
+            {EVENT_TYPES.HOME_FAIR.tagline}
+          </p>
         </div>
       </section>
 

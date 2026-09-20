@@ -6,9 +6,9 @@ const PACKAGES = [
     bullets: ["One listing. Coffee or live music sponsor.", "Leads go straight to your CRM."],
   },
   {
-    type: "Home Crawl",
+    type: "Home Hunt",
     bullets: [
-      "Featured stop on a multi-home crawl.",
+      "Featured stop on a multi-home hunt.",
       "Passport placement and signage included.",
     ],
   },
@@ -17,6 +17,13 @@ const PACKAGES = [
     bullets: [
       "Featured listing on a citywide passport.",
       "Signage included. Leads go to your CRM, with consent.",
+    ],
+  },
+  {
+    type: "Home Fair",
+    bullets: [
+      "Feature your model homes in a builder-hosted market.",
+      "Leads go straight to your CRM, with consent.",
     ],
   },
 ] as const;
@@ -38,7 +45,7 @@ export default function AgentsPage() {
         </p>
       </section>
 
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 pb-10 sm:grid-cols-2 sm:px-8 lg:grid-cols-3">
+      <section className="mx-auto grid max-w-4xl grid-cols-1 gap-6 px-6 pb-10 sm:grid-cols-2 sm:px-8">
         {PACKAGES.map((pkg) => (
           <div key={pkg.type} className="rounded-[20px] border border-charcoal/8 bg-white p-7">
             <h3 className="mb-3.5 font-serif text-lg font-bold text-sage">{pkg.type}</h3>

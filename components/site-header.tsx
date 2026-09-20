@@ -44,7 +44,7 @@ export function SiteHeader() {
           href="/events"
           className="whitespace-nowrap rounded-full bg-sage px-5 py-2.5 text-[13px] font-bold text-linen no-underline hover:bg-sage-dark"
         >
-          Find a Crawl
+          Find a Hunt
         </Link>
       </div>
     </header>

@@ -3,7 +3,7 @@ import { EVENT_TYPES } from "@/lib/event-types";
 import { EVENTS } from "@/lib/seed-data";
 
 export const metadata = {
-  title: "Upcoming crawls | Haven Rush",
+  title: "Upcoming hunts | Haven Rush",
 };
 
 export default function EventsPage() {
@@ -13,7 +13,7 @@ export default function EventsPage() {
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 sm:px-8">
-      <h1 className="mb-9 font-serif text-[clamp(26px,3.6vw,36px)] font-bold">Upcoming crawls</h1>
+      <h1 className="mb-9 font-serif text-[clamp(26px,3.6vw,36px)] font-bold">Upcoming hunts</h1>
       <div className="flex flex-col">
         {upcoming.map((event, index) => (
           <div
