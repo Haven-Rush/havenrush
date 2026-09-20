@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Domine:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F9F8F3;font-family:'Plus Jakarta Sans',-apple-system,sans-serif;}
+a{color:#2E5A44;}
+a:hover{color:#234534;}
+button{font-family:'Plus Jakarta Sans',sans-serif;}
+select,input,textarea{font-family:'Plus Jakarta Sans',sans-serif;}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#F9F8F3;color:#1F2421;" data-screen-label="Haven Rush App v2">
+
+<header style="position:sticky;top:0;z-index:50;background:rgba(249,248,243,0.94);backdrop-filter:blur(8px);border-bottom:1px solid rgba(31,36,33,0.08);">
+  <div style="max-width:1160px;margin:0 auto;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+    <button onClick="{{ goHome }}" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:0;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#2E5A44;display:flex;align-items:center;justify-content:center;color:#F2A93B;font-family:'Domine',serif;font-weight:700;font-size:15px;">HR</div>
+      <span style="font-family:'Domine',serif;font-size:20px;font-weight:700;color:#2E5A44;">Haven Rush</span>
+    </button>
+    <nav style="display:flex;align-items:center;gap:26px;font-size:13px;font-weight:700;flex-wrap:wrap;">
+      <button onClick="{{ goEvents }}" style="background:none;border:none;cursor:pointer;padding:4px 0;color:{{ eventsColor }};border-bottom:2px solid {{ eventsBorder }};">Events</button>
+      <button onClick="{{ goDetail }}" style="background:none;border:none;cursor:pointer;padding:4px 0;color:{{ detailColor }};border-bottom:2px solid {{ detailBorder }};">Event Example</button>
+      <button onClick="{{ goMobile }}" style="background:none;border:none;cursor:pointer;padding:4px 0;color:{{ mobileColor }};border-bottom:2px solid {{ mobileBorder }};">Mobile Passport</button>
+      <button onClick="{{ goB2B }}" style="background:none;border:none;cursor:pointer;padding:4px 0;color:{{ b2bColor }};border-bottom:2px solid {{ b2bBorder }};">For Agents &amp; Hosts</button>
+    </nav>
+    <button onClick="{{ goEvents }}" style="background:#2E5A44;color:#F9F8F3;font-size:13px;font-weight:700;padding:11px 20px;border-radius:999px;border:none;cursor:pointer;white-space:nowrap;">Find a Crawl</button>
+  </div>
+</header>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div>
+  <section style="max-width:760px;margin:0 auto;padding:88px 32px 48px;text-align:center;">
+    <h1 style="font-family:'Domine',serif;font-size:clamp(34px,5.2vw,56px);font-weight:700;line-height:1.14;margin:0 0 22px;">Walk the neighborhood.<br/>Meet the homes.</h1>
+    <p style="font-size:18px;color:rgba(31,36,33,0.7);line-height:1.6;max-width:520px;margin:0 auto 36px;">Explore local houses, sample neighborhood coffee, and listen to live music. No pressure. No pushy agents.</p>
+    <div style="background:#fff;padding:8px;border-radius:16px;box-shadow:0 12px 30px rgba(31,36,33,0.08);border:1px solid rgba(31,36,33,0.06);max-width:520px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:180px;display:flex;align-items:center;padding:10px 14px;">
+        <span style="font-size:14px;color:rgba(31,36,33,0.45);">Enter neighborhood or zip code</span>
+      </div>
+      <button onClick="{{ goEvents }}" style="background:#2E5A44;color:#F9F8F3;font-weight:700;font-size:13px;padding:12px 22px;border-radius:11px;border:none;cursor:pointer;white-space:nowrap;">Find a Crawl</button>
+    </div>
+  </section>
+
+  <section style="max-width:1160px;margin:0 auto;padding:16px 32px 96px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;">
+      <div style="background:#fff;border:1px solid rgba(31,36,33,0.08);border-radius:18px;padding:30px;">
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#c07f1e;margin-bottom:14px;">House Party</div>
+        <p style="font-size:15px;color:rgba(31,36,33,0.75);line-height:1.6;margin:0;">One home. Local coffee. Live music. Good company.</p>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(31,36,33,0.08);border-radius:18px;padding:30px;">
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#c07f1e;margin-bottom:14px;">Home Crawl</div>
+        <p style="font-size:15px;color:rgba(31,36,33,0.75);line-height:1.6;margin:0;">Walk 10 homes in an afternoon, with local food stops along the way.</p>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(31,36,33,0.08);border-radius:18px;padding:30px;">
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#c07f1e;margin-bottom:14px;">Home Fair</div>
+        <p style="font-size:15px;color:rgba(31,36,33,0.75);line-height:1.6;margin:0;">Local builders, designers, and coffee roasters, all in one space.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#2E5A44;padding:64px 32px;">
+    <div style="max-width:860px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:32px;">
+      <div style="max-width:500px;">
+        <h2 style="font-family:'Domine',serif;font-size:27px;font-weight:700;color:#F9F8F3;margin:0 0 10px;line-height:1.3;">Turn open houses into neighborhood events.</h2>
+        <p style="font-size:14px;color:rgba(249,248,243,0.75);line-height:1.6;margin:0;">We bring the crowd, local coffee, and music. You meet people who actually want to be there.</p>
+      </div>
+      <button onClick="{{ goB2B }}" style="background:#F2A93B;color:#1F2421;font-weight:700;font-size:14px;padding:14px 28px;border-radius:999px;border:none;cursor:pointer;white-space:nowrap;">Partner With Us</button>
+    </div>
+  </section>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEvents }}" hint-placeholder-val="{{ false }}">
+<section style="max-width:760px;margin:0 auto;padding:56px 32px 96px;">
+  <h1 style="font-family:'Domine',serif;font-size:clamp(26px,3.6vw,36px);font-weight:700;margin:0 0 36px;">Upcoming crawls</h1>
+  <div style="display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0;border-bottom:1px solid rgba(31,36,33,0.1);flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#c07f1e;margin-bottom:6px;">Home Crawl</div>
+        <div style="font-family:'Domine',serif;font-size:19px;font-weight:700;margin-bottom:4px;">South Congress Tasting Crawl</div>
+        <div style="font-size:13px;color:rgba(31,36,33,0.6);">Sat, Oct 24 · South Congress, Austin</div>
+      </div>
+      <button onClick="{{ goDetail }}" style="background:#F9F8F3;color:#2E5A44;border:1px solid rgba(46,90,68,0.2);font-weight:700;font-size:13px;padding:11px 20px;border-radius:999px;cursor:pointer;white-space:nowrap;">Get Pass</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0;border-bottom:1px solid rgba(31,36,33,0.1);flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#c07f1e;margin-bottom:6px;">House Party</div>
+        <div style="font-family:'Domine',serif;font-size:19px;font-weight:700;margin-bottom:4px;">The Elizabeth St Social</div>
+        <div style="font-size:13px;color:rgba(31,36,33,0.6);">Sun, Oct 25 · Bouldin Creek</div>
+      </div>
+      <button style="background:#F9F8F3;color:#2E5A44;border:1px solid rgba(46,90,68,0.2);font-weight:700;font-size:13px;padding:11px 20px;border-radius:999px;cursor:pointer;white-space:nowrap;">Get Pass</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0;border-bottom:1px solid rgba(31,36,33,0.1);flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#c07f1e;margin-bottom:6px;">Home Fair</div>
+        <div style="font-family:'Domine',serif;font-size:19px;font-weight:700;margin-bottom:4px;">Austin Housing Fair</div>
+        <div style="font-size:13px;color:rgba(31,36,33,0.6);">Nov 7–8 · Downtown Expo Center</div>
+      </div>
+      <button style="background:#F9F8F3;color:#2E5A44;border:1px solid rgba(46,90,68,0.2);font-weight:700;font-size:13px;padding:11px 20px;border-radius:999px;cursor:pointer;white-space:nowrap;">Get Pass</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#c07f1e;margin-bottom:6px;">Home Crawl</div>
+        <div style="font-family:'Domine',serif;font-size:19px;font-weight:700;margin-bottom:4px;">Hyde Park Porch Crawl</div>
+        <div style="font-size:13px;color:rgba(31,36,33,0.6);">Nov 21 · Hyde Park</div>
+      </div>
+      <button style="background:#F9F8F3;color:#2E5A44;border:1px solid rgba(46,90,68,0.2);font-weight:700;font-size:13px;padding:11px 20px;border-radius:999px;cursor:pointer;white-space:nowrap;">Get Pass</button>
+    </div>
+  </div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+<section style="max-width:760px;margin:0 auto;padding:48px 32px 96px;">
+  <button onClick="{{ goEvents }}" style="background:none;border:none;color:#2E5A44;font-size:13px;font-weight:600;cursor:pointer;padding:0;margin-bottom:24px;">← Back to events</button>
+
+  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#c07f1e;margin-bottom:10px;">Home Crawl</div>
+  <h1 style="font-family:'Domine',serif;font-size:clamp(26px,3.8vw,36px);font-weight:700;margin:0 0 8px;">South Congress Tasting Crawl</h1>
+  <p style="font-size:14px;color:rgba(31,36,33,0.55);margin:0 0 28px;">South Congress District · Austin, TX</p>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;border-top:1px solid rgba(31,36,33,0.1);border-bottom:1px solid rgba(31,36,33,0.1);padding:22px 0;margin-bottom:28px;text-align:center;">
+    <div><div style="font-size:11px;color:rgba(31,36,33,0.5);margin-bottom:4px;">Homes</div><div style="font-weight:700;color:#2E5A44;font-size:15px;">12</div></div>
+    <div><div style="font-size:11px;color:rgba(31,36,33,0.5);margin-bottom:4px;">Food Stops</div><div style="font-weight:700;color:#2E5A44;font-size:15px;">4</div></div>
+    <div><div style="font-size:11px;color:rgba(31,36,33,0.5);margin-bottom:4px;">Reward</div><div style="font-weight:700;color:#F2A93B;font-size:15px;">Free Coffee</div></div>
+  </div>
+
+  <sc-if value="{{ isRsvp0 }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#F9F8F3;border:1px solid rgba(31,36,33,0.08);border-radius:16px;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div><div style="font-family:'Domine',serif;font-size:22px;font-weight:700;">$0 Free Pass</div></div>
+      <button onClick="{{ goRsvp1 }}" style="background:#2E5A44;color:#F9F8F3;font-weight:700;font-size:14px;padding:13px 28px;border-radius:999px;border:none;cursor:pointer;">Get Pass</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isRsvp1 }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#F9F8F3;border:1px solid rgba(46,90,68,0.2);border-radius:16px;padding:24px;">
+      <h3 style="font-family:'Domine',serif;font-size:17px;font-weight:700;margin:0 0 18px;">Quick preferences</h3>
+      <div style="margin-bottom:18px;">
+        <div style="font-size:12px;font-weight:700;color:rgba(31,36,33,0.6);margin-bottom:8px;">Timeline</div>
+        <div style="display:flex;gap:10px;">
+          <span style="background:#2E5A44;color:#F9F8F3;font-size:13px;font-weight:700;padding:10px 18px;border-radius:999px;">Just looking</span>
+          <span style="background:#fff;border:1px solid rgba(31,36,33,0.15);font-size:13px;font-weight:600;padding:10px 18px;border-radius:999px;">Moving soon</span>
+        </div>
+      </div>
+      <div style="margin-bottom:22px;">
+        <div style="font-size:12px;font-weight:700;color:rgba(31,36,33,0.6);margin-bottom:8px;">Type</div>
+        <div style="display:flex;gap:10px;">
+          <span style="background:#2E5A44;color:#F9F8F3;font-size:13px;font-weight:700;padding:10px 18px;border-radius:999px;">Buying</span>
+          <span style="background:#fff;border:1px solid rgba(31,36,33,0.15);font-size:13px;font-weight:600;padding:10px 18px;border-radius:999px;">Renting</span>
+        </div>
+      </div>
+      <button onClick="{{ goRsvp2 }}" style="background:#2E5A44;color:#F9F8F3;font-weight:700;font-size:13px;padding:13px 26px;border-radius:999px;border:none;cursor:pointer;">Continue</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isRsvp2 }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#2E5A44;color:#F9F8F3;border-radius:16px;padding:28px;text-align:center;">
+      <div style="width:40px;height:40px;border-radius:50%;background:#F2A93B;color:#1F2421;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:18px;">✓</div>
+      <h3 style="font-family:'Domine',serif;font-size:20px;font-weight:700;margin:0 0 18px;">You're in.</h3>
+      <button onClick="{{ goMobile }}" style="background:#F2A93B;color:#1F2421;font-weight:700;font-size:13px;padding:12px 24px;border-radius:999px;border:none;cursor:pointer;">View Mobile Passport</button>
+    </div>
+  </sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+<section style="padding:56px 16px;display:flex;flex-direction:column;align-items:center;">
+  <p style="font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:rgba(31,36,33,0.5);margin:0 0 24px;">Mobile Passport</p>
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" title="Haven Rush" hint-size="390px,844px">
+    <div style="background:#F9F8F3;min-height:100%;color:#1F2421;padding-bottom:90px;position:relative;">
+      <div style="background:#2E5A44;color:#F9F8F3;padding:20px 20px 22px;border-radius:0 0 28px 28px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#F2A93B;font-weight:700;margin-bottom:4px;">Your Pass</div>
+            <div style="font-family:'Domine',serif;font-size:19px;font-weight:700;">South Congress Crawl</div>
+          </div>
+          <div style="background:#F2A93B;color:#1F2421;font-size:11px;font-weight:800;padding:6px 12px;border-radius:999px;white-space:nowrap;">2 Stamped</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.14);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div><div style="font-size:12px;font-weight:700;">Coffee reward</div><div style="font-size:11px;color:rgba(249,248,243,0.7);margin-top:2px;">2 more stops to go</div></div>
+          <div style="width:64px;height:8px;background:rgba(255,255,255,0.25);border-radius:999px;overflow:hidden;flex-shrink:0;"><div style="width:40%;height:100%;background:#F2A93B;"></div></div>
+        </div>
+      </div>
+      <div style="padding:20px;">
+        <div style="font-family:'Domine',serif;font-size:16px;font-weight:700;margin-bottom:14px;">Your stops</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:#fff;border:1px solid rgba(31,36,33,0.08);border-radius:16px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:34px;height:34px;border-radius:50%;background:#2E5A44;color:#F2A93B;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">✓</div>
+              <div><div style="font-size:13px;font-weight:700;">1408 Elizabeth St</div><div style="font-size:11px;color:rgba(31,36,33,0.55);">Coffee stop · stamped</div></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:#2E5A44;background:rgba(46,90,68,0.1);padding:5px 10px;border-radius:8px;">Stamped</span>
+          </div>
+          <div style="background:#fff;border:2px solid #F2A93B;border-radius:16px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:34px;height:34px;border-radius:50%;background:rgba(242,169,59,0.2);color:#1F2421;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">02</div>
+              <div><div style="font-size:13px;font-weight:700;">1802 S 1st Street</div><div style="font-size:11px;color:rgba(31,36,33,0.55);">Taco stop</div></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:#fff;background:#2E5A44;padding:7px 12px;border-radius:8px;white-space:nowrap;">Scan QR</span>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid rgba(31,36,33,0.1);padding:14px 24px;display:flex;justify-content:space-around;align-items:center;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#2E5A44;font-size:10px;font-weight:700;"><div style="width:8px;height:8px;border-radius:50%;background:#2E5A44;"></div><span>Map</span></div>
+        <div style="width:52px;height:52px;border-radius:50%;background:#2E5A44;color:#F2A93B;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:-28px;border:4px solid #F9F8F3;">QR</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(31,36,33,0.4);font-size:10px;font-weight:700;"><div style="width:8px;height:8px;border-radius:50%;background:rgba(31,36,33,0.3);"></div><span>Rewards</span></div>
+      </div>
+    </div>
+  </x-import>
+</section>
+</sc-if>
+
+<sc-if value="{{ isB2B }}" hint-placeholder-val="{{ false }}">
+<section style="max-width:760px;margin:0 auto;padding:64px 32px 40px;text-align:center;">
+  <h1 style="font-family:'Domine',serif;font-size:clamp(28px,4.2vw,40px);font-weight:700;color:#2E5A44;margin:0 0 16px;line-height:1.25;">Turn open houses into neighborhood events.</h1>
+  <p style="font-size:16px;color:rgba(31,36,33,0.65);line-height:1.6;max-width:520px;margin:0 auto;">We bring the crowd, local coffee, and music. You meet people who actually want to be there.</p>
+</section>
+<section style="max-width:1160px;margin:0 auto;padding:0 32px 56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;">
+  <div style="background:#fff;border:1px solid rgba(31,36,33,0.08);border-radius:20px;padding:28px;">
+    <h3 style="font-family:'Domine',serif;font-size:18px;font-weight:700;color:#2E5A44;margin:0 0 14px;">House Party</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:rgba(31,36,33,0.65);margin-bottom:20px;">
+      <div>One listing. Coffee or live music sponsor.</div>
+      <div>Leads go straight to your CRM.</div>
+    </div>
+    <button style="width:100%;background:#2E5A44;color:#F9F8F3;font-weight:700;font-size:12px;padding:12px;border-radius:999px;border:none;cursor:pointer;">Request Info</button>
+  </div>
+  <div style="background:#fff;border:1px solid rgba(31,36,33,0.08);border-radius:20px;padding:28px;">
+    <h3 style="font-family:'Domine',serif;font-size:18px;font-weight:700;color:#2E5A44;margin:0 0 14px;">Home Crawl</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:rgba(31,36,33,0.65);margin-bottom:20px;">
+      <div>Featured stop on a multi-home crawl.</div>
+      <div>Passport placement and signage included.</div>
+    </div>
+    <button style="width:100%;background:#2E5A44;color:#F9F8F3;font-weight:700;font-size:12px;padding:12px;border-radius:999px;border:none;cursor:pointer;">Request Info</button>
+  </div>
+</section>
+</sc-if>
+
+<sc-if value="{{ showFooter }}" hint-placeholder-val="{{ true }}">
+<footer style="background:#1F2421;color:#F9F8F3;padding:48px 32px 28px;">
+  <div style="max-width:1160px;margin:0 auto;">
+    <div style="font-family:'Domine',serif;font-size:18px;font-weight:700;margin-bottom:18px;">Haven Rush</div>
+    <div style="border-top:1px solid rgba(249,248,243,0.15);padding-top:18px;font-size:11px;color:rgba(249,248,243,0.5);line-height:1.6;">Haven Rush is an event marketing platform. Real estate services are provided by independent licensed partner agents.</div>
+  </div>
+</footer>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { view: 'home', rsvpStep: 0 };
+  renderVals() {
+    const v = this.state.view;
+    const sageColor = '#2E5A44';
+    const mutedColor = 'rgba(31,36,33,0.75)';
+    return {
+      isHome: v === 'home',
+      isEvents: v === 'events',
+      isDetail: v === 'detail',
+      isMobile: v === 'mobile',
+      isB2B: v === 'b2b',
+      showFooter: v !== 'mobile',
+      eventsColor: v === 'events' ? sageColor : mutedColor,
+      eventsBorder: v === 'events' ? sageColor : 'transparent',
+      detailColor: v === 'detail' ? sageColor : mutedColor,
+      detailBorder: v === 'detail' ? sageColor : 'transparent',
+      mobileColor: v === 'mobile' ? sageColor : mutedColor,
+      mobileBorder: v === 'mobile' ? sageColor : 'transparent',
+      b2bColor: v === 'b2b' ? sageColor : mutedColor,
+      b2bBorder: v === 'b2b' ? sageColor : 'transparent',
+      goHome: () => this.setState({ view: 'home' }),
+      goEvents: () => this.setState({ view: 'events' }),
+      goDetail: () => this.setState({ view: 'detail', rsvpStep: 0 }),
+      goMobile: () => this.setState({ view: 'mobile' }),
+      goB2B: () => this.setState({ view: 'b2b' }),
+      isRsvp0: this.state.rsvpStep === 0,
+      isRsvp1: this.state.rsvpStep === 1,
+      isRsvp2: this.state.rsvpStep === 2,
+      goRsvp1: () => this.setState({ rsvpStep: 1 }),
+      goRsvp2: () => this.setState({ rsvpStep: 2 })
+    };
+  }
+}
+</script>
+</body>
+</html>
