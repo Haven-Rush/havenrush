@@ -1,5 +1,42 @@
 # Decisions & assumptions
 
+## CLAUDE.md replaced verbatim; Home Fair copy/seed corrected (2026-09-21)
+The user supplied an updated CLAUDE.md and asked that the repo's copy be
+replaced with it exactly. Beyond the Vocabulary section (expected — it's
+what prompted the update), the Stack section also changed: it now spells
+out `NEXT_PUBLIC_SITE_URL` for building absolute URLs (QR codes encode
+`${SITE_URL}/s/[scanToken]`), clarifies Cloudflare is DNS/redirects only
+(no Workers/D1), and names the Supabase project (`haven-rush`). Everything
+else (Files, Design tokens, Product rules, Placeholder data, Working
+style) was byte-identical. `NEXT_PUBLIC_SITE_URL` isn't wired up yet since
+the `/s/[scanToken]` scan flow doesn't exist yet (Phase 3/4) — flagging so
+it isn't missed when that's built.
+
+Corrected two things from the previous entry below to match the new
+CLAUDE.md's exact wording:
+- Home Fair's home-page card copy is now the literal string from CLAUDE.md
+  ("A builder's new neighborhood, opened up like a market. Tour model
+  homes, meet local makers, and collect stamps."), replacing the
+  looser paraphrase used before.
+- The placeholder Home Fair seed event is no longer "Mueller New Home
+  Market" (a real, established Austin neighborhood) — it's now "Sunday
+  Market at Willow Creek" (`sunday-market-at-willow-creek`), matching
+  CLAUDE.md's suggested placeholder exactly. Willow Creek is a fictional
+  new-construction community, which fits the corrected Home Fair concept
+  (a builder opening a *new* neighborhood like a market day) better than
+  reusing a real, already-established one. Broadened its stops beyond
+  model homes + coffee/food to include the lender/designer/mover booths
+  and live-music stage CLAUDE.md now describes as part of the format,
+  using VENDOR/MUSIC stop kinds already in the schema (no schema change
+  needed).
+
+No migration change was needed for this pass: migration
+`20260921120000_rename_home_crawl_add_home_fair` (added in the previous
+entry) was already a new, additive migration — it doesn't edit any
+previously shipped migration file, and it already does exactly what's
+required here (rename `HOME_CRAWL`→`HOME_HUNT` in place, add `HOME_FAIR`
+back, no existing rows touched).
+
 ## Event types: Home Crawl renamed to Home Hunt, Home Fair restored (2026-09-21)
 Per explicit instruction, renamed `HOME_CRAWL` to `HOME_HUNT` everywhere
 (enum, `lib/event-types.ts`, seed data ids/slugs/titles, UI copy — "Find a

@@ -21,7 +21,8 @@ export const EVENT_TYPES = {
   },
   HOME_FAIR: {
     label: "Home Fair",
-    tagline: "A builder-hosted market of move-in-ready and to-be-built homes, all in one place.",
+    tagline:
+      "A builder's new neighborhood, opened up like a market. Tour model homes, meet local makers, and collect stamps.",
   },
 } as const;
 
