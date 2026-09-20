@@ -36,7 +36,13 @@ Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. Real URLs replace the
 - Voice: warm, neighborhood-proud, never salesy, no real-estate jargon. B2B pages are clear and ROI-focused.
 
 ## Vocabulary (canonical)
-Event types: **House Party**, **Home Crawl**, **Home Fair**, and **Open House Weekend** (docs only; not in the mockup yet). The brand doc and business plan call Home Crawl "Home Hunt"; the mockup UI says "Home Crawl". Keep the enum in one place (`lib/event-types.ts`) so a rename is a one-line change.
+Event types (three, final): **House Party**, **Home Crawl**, **Open House Weekend**.
+
+- **Home Fair is not offered.** It was in the mockup's original spec, but it is an expo/trade-show format, not a Haven Rush experience. Remove it from the UI, seed data, and the `EventType` enum. The brand doc and business plan still describe it; ignore those sections (they can be revived later as a separate product).
+- **Open House Weekend** replaces it: a recurring, multi-property event over a defined weekend, with homes across a city or several neighborhoods, one digital passport, self-paced visits, QR check-ins and prizes. It differs from Home Crawl in scale and pace: a Crawl is one walkable afternoon with food stops; a Weekend is spread out, self-guided, and repeats (monthly is the plan). Home card copy: "A whole weekend, homes across town, one passport. Go at your own pace and collect stamps." Sponsor/agent value: participating-property fees, featured listings, sponsors, premium placement.
+- The mockup's "Austin Housing Fair · Nov 7–8 · Downtown Expo Center" becomes an Open House Weekend (e.g. "Austin Open House Weekend · Nov 7–8 · Citywide"). Its stops are listings only, plus optional coffee/food partners.
+- `/agents` gets a third package card, "Open House Weekend": featured listing on a citywide passport, signage, and leads to your CRM (with consent).
+- The brand doc and business plan call Home Crawl "Home Hunt"; the mockup UI says "Home Crawl". Keep the enum in one place (`lib/event-types.ts`) so a rename is a one-line change.
 
 ## Product rules that must hold
 1. **Consent before any lead leaves the system.** Sharing an attendee's details with an agent happens only if they ticked an explicit, unchecked-by-default consent box at RSVP. Store the consent flag, timestamp, and the exact consent text shown.
