@@ -1,0 +1,176 @@
+// Prisma schema — Postgres via Supabase (see DECISIONS.md for why both dev
+// and prod use Supabase instead of SQLite+Postgres).
+//
+// DATABASE_URL: Supabase transaction pooler (port 6543, pgbouncer=true) —
+//   used by Prisma Client at runtime.
+// DIRECT_URL:   Supabase direct connection (port 5432) — used only by
+//   Prisma Migrate, which needs session-level features the pooler doesn't
+//   support in transaction mode.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum EventType {
+  HOUSE_PARTY
+  HOME_HUNT
+  OPEN_HOUSE_WEEKEND
+  HOME_FAIR
+}
+
+enum StopKind {
+  LISTING
+  COFFEE
+  FOOD
+  MUSIC
+  VENDOR
+}
+
+enum Intent {
+  BUYING
+  RENTING
+}
+
+enum Timeline {
+  JUST_LOOKING
+  MOVING_SOON
+}
+
+enum LeadDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Attendee {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  passes Pass[]
+}
+
+model Agent {
+  id            String  @id @default(cuid())
+  name          String
+  email         String  @unique
+  brokerage     String
+  crmWebhookUrl String?
+
+  stops          Stop[]
+  leadDeliveries LeadDelivery[]
+}
+
+model Event {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  title        String
+  type         EventType
+  neighborhood String
+  city         String
+  startsAt     DateTime
+  endsAt       DateTime
+  description  String
+  /// e.g. [{"stops":3,"reward":"Free coffee"}]
+  rewardTiers  Json
+
+  stops    Stop[]
+  sponsors Sponsor[]
+  passes   Pass[]
+}
+
+model Stop {
+  id        String   @id @default(cuid())
+  eventId   String
+  order     Int
+  kind      StopKind
+  name      String
+  address   String
+  // Required when kind = LISTING; enforced at the API layer (Phase 3),
+  // since Postgres/Prisma can't express a conditional NOT NULL declaratively
+  // without a hand-written CHECK constraint.
+  agentId   String?
+  scanToken String   @unique
+
+  event  Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  agent  Agent?  @relation(fields: [agentId], references: [id])
+  stamps Stamp[]
+
+  @@index([eventId])
+}
+
+model Sponsor {
+  id      String @id @default(cuid())
+  eventId String
+  name    String
+  role    String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model Pass {
+  id                  String    @id @default(cuid())
+  token               String    @unique
+  attendeeId          String
+  eventId             String
+  intent              Intent
+  timeline            Timeline
+  agentContactConsent Boolean   @default(false)
+  consentedAt         DateTime?
+  consentText         String
+  createdAt           DateTime  @default(now())
+
+  attendee       Attendee       @relation(fields: [attendeeId], references: [id])
+  event          Event          @relation(fields: [eventId], references: [id])
+  stamps         Stamp[]
+  leadDeliveries LeadDelivery[]
+
+  @@unique([attendeeId, eventId])
+}
+
+model Stamp {
+  id        String   @id @default(cuid())
+  passId    String
+  stopId    String
+  stampedAt DateTime @default(now())
+
+  pass Pass @relation(fields: [passId], references: [id], onDelete: Cascade)
+  stop Stop @relation(fields: [stopId], references: [id], onDelete: Cascade)
+
+  @@unique([passId, stopId])
+}
+
+model AgentInquiry {
+  id              String   @id @default(cuid())
+  name            String
+  email           String
+  brokerage       String
+  packageInterest String
+  message         String
+  createdAt       DateTime @default(now())
+}
+
+model LeadDelivery {
+  id          String             @id @default(cuid())
+  passId      String
+  agentId     String
+  status      LeadDeliveryStatus @default(PENDING)
+  attempts    Int                @default(0)
+  deliveredAt DateTime?
+
+  pass  Pass  @relation(fields: [passId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id])
+
+  @@index([passId])
+  @@index([agentId])
+}

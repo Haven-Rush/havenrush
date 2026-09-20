@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sage: #2e5a44;
+  --color-sage-dark: #234534;
+  --color-honey: #f2a93b;
+  --color-honey-text: #c07f1e;
+  --color-charcoal: #1f2421;
+  --color-linen: #f9f8f3;
+
+  --font-serif: var(--font-domine), Georgia, serif;
+  --font-sans: var(--font-jakarta), -apple-system, sans-serif;
+}
+
+body {
+  background: var(--color-linen);
+  color: var(--color-charcoal);
+}
+
+a {
+  color: var(--color-sage);
+}
+
+a:hover {
+  color: var(--color-sage-dark);
+}
