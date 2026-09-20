@@ -13,7 +13,12 @@ Haven Rush is an event marketing platform that turns home discovery into neighbo
 - `docs/business-plan.md` — products, customers, revenue model, launch plan.
 
 ## Stack (decided)
-Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. SQLite for local dev, Postgres for production. Real URLs replace the mockup's view switching.
+Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. Real URLs replace the mockup's view switching.
+
+- **Database:** Supabase Postgres for dev and production (no SQLite, so enums/JSON behave the same everywhere). Prisma uses two URLs: `DATABASE_URL` = Supabase pooled connection (port 6543, `?pgbouncer=true`) for the app, `DIRECT_URL` = direct connection for migrations. Use separate Supabase projects for dev and prod.
+- **Lock down the auto-generated API:** Supabase exposes `public` tables through its REST API using the anon key. Enable Row Level Security on every table with no policies, so only the server (Prisma, via the database connection) can read or write. Attendee emails live here. Never use the Supabase client or anon key in browser code, and never commit `.env`.
+- **Hosting:** Vercel for the app. Cloudflare is DNS + redirects only (no Cloudflare Workers/D1).
+- **Domain:** `havenrush.com` is canonical. All other Haven Rush domains 301-redirect to it. Use absolute URLs built from a `NEXT_PUBLIC_SITE_URL` env var (QR codes encode `${SITE_URL}/s/[scanToken]` and can't be reprinted).
 
 | Mockup view | Route |
 |---|---|
