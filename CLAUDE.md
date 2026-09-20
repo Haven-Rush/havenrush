@@ -36,13 +36,18 @@ Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. Real URLs replace the
 - Voice: warm, neighborhood-proud, never salesy, no real-estate jargon. B2B pages are clear and ROI-focused.
 
 ## Vocabulary (canonical)
-Event types (three, final): **House Party**, **Home Crawl**, **Open House Weekend**.
+**The scavenger-hunt mechanic is the heart of Haven Rush.** Every format runs on a passport: attendees collect stamps by scanning QR codes at stops, unlock rewards, and win prizes. Never dilute this. Treat it as the brand's signature, not a feature.
 
-- **Home Fair is not offered.** It was in the mockup's original spec, but it is an expo/trade-show format, not a Haven Rush experience. Remove it from the UI, seed data, and the `EventType` enum. The brand doc and business plan still describe it; ignore those sections (they can be revived later as a separate product).
-- **Open House Weekend** replaces it: a recurring, multi-property event over a defined weekend, with homes across a city or several neighborhoods, one digital passport, self-paced visits, QR check-ins and prizes. It differs from Home Crawl in scale and pace: a Crawl is one walkable afternoon with food stops; a Weekend is spread out, self-guided, and repeats (monthly is the plan). Home card copy: "A whole weekend, homes across town, one passport. Go at your own pace and collect stamps." Sponsor/agent value: participating-property fees, featured listings, sponsors, premium placement.
-- The mockup's "Austin Housing Fair · Nov 7–8 · Downtown Expo Center" becomes an Open House Weekend (e.g. "Austin Open House Weekend · Nov 7–8 · Citywide"). Its stops are listings only, plus optional coffee/food partners.
-- `/agents` gets a third package card, "Open House Weekend": featured listing on a citywide passport, signage, and leads to your CRM (with consent).
-- The brand doc and business plan call Home Crawl "Home Hunt"; the mockup UI says "Home Crawl". Keep the enum in one place (`lib/event-types.ts`) so a rename is a one-line change.
+Four event types. The first three are the signature formats and the priority for the build, copy, and design. The fourth is a B2B product.
+
+1. **House Party** (`HOUSE_PARTY`): one home, local coffee, live music, neighbors. Smallest format.
+2. **Home Hunt** (`HOME_HUNT`): a self-guided walk through ~10-20 homes in an afternoon, with food stops, games, and a stamped passport. **Use "Hunt", not "Crawl".** "Crawl" reads as a pub crawl and drops the scavenger idea. The mockup says "Crawl"; change all UI copy and titles to "Hunt" (button "Find a Hunt"; "South Congress Tasting Hunt"; "Hyde Park Porch Hunt").
+3. **Open House Weekend** (`OPEN_HOUSE_WEEKEND`): a recurring multi-property scavenger hunt over a defined weekend, homes across a city or several neighborhoods, one digital passport, self-paced. Differs from Home Hunt in scale and pace: a Hunt is one walkable afternoon; a Weekend is spread out and repeats (monthly is the plan). Card copy: "A whole weekend, homes across town, one passport. Go at your own pace and collect stamps."
+4. **Home Fair** (`HOME_FAIR`): not a generic home show. It is a **builder-hosted market gathering in a new neighborhood**: a home builder opens its community like a market day, with model homes, local makers and food, live music, and lender/designer/mover booths, and attendees collect stamps by visiting booths and homes. Sold to builders and new-construction sponsors (vendor booths, sponsorships). Card copy: "A builder's new neighborhood, opened up like a market. Tour model homes, meet local makers, and collect stamps." Seed a placeholder such as "Sunday Market at Willow Creek · Nov 7-8 · New neighborhood" (rename later). Its host may be a builder rather than a brokerage: show the builder and any listing brokerage.
+
+Keep the enum in one place (`lib/event-types.ts`) so a rename is a one-line change. The brand doc and business plan already use "Home Hunt".
+
+Home page shows House Party, Home Hunt, and Open House Weekend as the three main cards; Home Fair appears as a smaller "For builders" card or link to `/agents`. `/agents` has package cards for House Party, Home Hunt, Open House Weekend, and a Home Fair option for builders.
 
 ## Product rules that must hold
 1. **Consent before any lead leaves the system.** Sharing an attendee's details with an agent happens only if they ticked an explicit, unchecked-by-default consent box at RSVP. Store the consent flag, timestamp, and the exact consent text shown.
