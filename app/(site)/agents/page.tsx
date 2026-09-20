@@ -12,6 +12,13 @@ const PACKAGES = [
       "Passport placement and signage included.",
     ],
   },
+  {
+    type: "Open House Weekend",
+    bullets: [
+      "Featured listing on a citywide passport.",
+      "Signage included. Leads go to your CRM, with consent.",
+    ],
+  },
 ] as const;
 
 export const metadata = {
@@ -31,7 +38,7 @@ export default function AgentsPage() {
         </p>
       </section>
 
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 pb-10 sm:grid-cols-2 sm:px-8">
+      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 pb-10 sm:grid-cols-2 sm:px-8 lg:grid-cols-3">
         {PACKAGES.map((pkg) => (
           <div key={pkg.type} className="rounded-[20px] border border-charcoal/8 bg-white p-7">
             <h3 className="mb-3.5 font-serif text-lg font-bold text-sage">{pkg.type}</h3>

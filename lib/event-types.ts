@@ -14,24 +14,15 @@ export const EVENT_TYPES = {
     label: "Home Crawl",
     tagline: "Walk a handful of homes in an afternoon, with local food stops along the way.",
   },
-  HOME_FAIR: {
-    label: "Home Fair",
-    tagline: "Local builders, designers, and coffee roasters, all in one space.",
-  },
   OPEN_HOUSE_WEEKEND: {
     label: "Open House Weekend",
-    tagline: "A weekend of homes across the city, one map, one passport.",
+    tagline: "A whole weekend, homes across town, one passport. Go at your own pace and collect stamps.",
   },
 } as const;
 
 export type EventType = keyof typeof EVENT_TYPES;
 
-export const EVENT_TYPE_ORDER: EventType[] = [
-  "HOUSE_PARTY",
-  "HOME_CRAWL",
-  "HOME_FAIR",
-  "OPEN_HOUSE_WEEKEND",
-];
+export const EVENT_TYPE_ORDER: EventType[] = ["HOUSE_PARTY", "HOME_CRAWL", "OPEN_HOUSE_WEEKEND"];
 
 export const STOP_KINDS = {
   LISTING: { label: "Home" },

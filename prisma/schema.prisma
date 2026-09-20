@@ -20,7 +20,6 @@ datasource db {
 enum EventType {
   HOUSE_PARTY
   HOME_CRAWL
-  HOME_FAIR
   OPEN_HOUSE_WEEKEND
 }
 

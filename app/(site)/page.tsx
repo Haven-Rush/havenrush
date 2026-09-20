@@ -29,11 +29,8 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-6xl px-6 pb-24 pt-4 sm:px-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {EVENT_TYPE_ORDER.filter((type) => type !== "OPEN_HOUSE_WEEKEND").map((type) => (
-            <div
-              key={type}
-              className="rounded-[18px] border border-charcoal/8 bg-white p-7"
-            >
+          {EVENT_TYPE_ORDER.map((type) => (
+            <div key={type} className="rounded-[18px] border border-charcoal/8 bg-white p-7">
               <div className="mb-3.5 text-[11px] font-extrabold uppercase tracking-wide text-honey-text">
                 {EVENT_TYPES[type].label}
               </div>

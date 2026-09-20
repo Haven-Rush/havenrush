@@ -31,7 +31,7 @@ Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. Postgres via Supabase
 - Voice: warm, neighborhood-proud, never salesy, no real-estate jargon. B2B pages are clear and ROI-focused.
 
 ## Vocabulary (canonical)
-Event types: **House Party**, **Home Crawl**, **Home Fair**, and **Open House Weekend** (docs only; not in the mockup yet). The brand doc and business plan call Home Crawl "Home Hunt"; the mockup UI says "Home Crawl". Keep the enum in one place (`lib/event-types.ts`) so a rename is a one-line change.
+Event types: **House Party**, **Home Crawl**, and **Open House Weekend** (Home Fair was retired — see DECISIONS.md). The brand doc and business plan call Home Crawl "Home Hunt"; the mockup UI says "Home Crawl". Keep the enum in one place (`lib/event-types.ts`) so a rename is a one-line change.
 
 ## Product rules that must hold
 1. **Consent before any lead leaves the system.** Sharing an attendee's details with an agent happens only if they ticked an explicit, unchecked-by-default consent box at RSVP. Store the consent flag, timestamp, and the exact consent text shown.

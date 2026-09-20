@@ -1,5 +1,26 @@
 # Decisions & assumptions
 
+## Event type: Home Fair retired, replaced by Open House Weekend (2026-09-20)
+Per explicit instruction, removed `HOME_FAIR` everywhere (home page card,
+events feed, seed data, `/agents`, the `EventType` enum) and replaced its
+slot with `OPEN_HOUSE_WEEKEND`, which already existed in the enum/vocabulary
+as a docs-only type. The seeded "Austin Housing Fair" event became "Austin
+Open House Weekend · Nov 7–8 · Citywide", with its stops changed from
+VENDOR/COFFEE booths to five LISTING-only stops spread across neighborhoods
+(South Congress, Bouldin Creek, Hyde Park, Zilker, Travis Heights), each
+with a brokerage/agent — two of those brokerages (Zilker Realty Group,
+Travis Heights Realty) are new placeholder seed data introduced for this
+event. Its event-level sponsors (Lonestar Lending, Capital Title) were kept
+as-is since Sponsor is a separate concept from passport stops.
+
+Since the enum already had a Prisma migration applied in principle (Phase 2
+shipped `20260920221259_init`), removing `HOME_FAIR` from a live enum isn't
+a simple column edit — Postgres has no `DROP VALUE` for enums. Added migration
+`20260921000000_remove_home_fair_event_type`, which moves any existing
+`HOME_FAIR` rows to `OPEN_HOUSE_WEEKEND` first, then swaps the column to a
+freshly created enum without the retired value (rename-old/create-new/cast/drop-old
+pattern) rather than editing the already-shipped migration files.
+
 ## Stack: Supabase Postgres for dev and prod (2026-09-20)
 Originally CLAUDE.md called for SQLite in local dev and Postgres in production.
 Per explicit instruction, we switched to Postgres via Supabase for **both**
