@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEventBySlug, getPassByToken } from "@/lib/seed-data";
+import { computePassProgress, getPassByToken } from "@/lib/passport-db";
 import { STOP_KINDS } from "@/lib/event-types";
+
+export const dynamic = "force-dynamic";
 
 export default async function PassportPage({
   params,
@@ -9,19 +11,14 @@ export default async function PassportPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const pass = getPassByToken(token);
+  const pass = await getPassByToken(token);
   if (!pass) notFound();
 
-  const event = getEventBySlug(pass.eventSlug);
-  if (!event) notFound();
-
-  const stampedCount = pass.stampedStopIds.length;
-  const sortedTiers = [...event.rewardTiers].sort((a, b) => a.stops - b.stops);
-  const nextTier = sortedTiers.find((tier) => tier.stops > stampedCount);
-  const currentReward = [...sortedTiers].reverse().find((tier) => tier.stops <= stampedCount);
-  const progressPct = nextTier
-    ? Math.min(100, Math.round((stampedCount / nextTier.stops) * 100))
-    : 100;
+  const stampedStopIds = new Set(pass.stamps.map((stamp) => stamp.stopId));
+  const { stampedCount, nextTier, currentReward, progressPct } = computePassProgress(
+    pass.event.rewardTiers,
+    stampedStopIds.size,
+  );
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-linen pb-24 text-charcoal">
@@ -37,7 +34,7 @@ export default async function PassportPage({
             <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-honey">
               Your Pass
             </div>
-            <div className="font-serif text-[19px] font-bold">{event.title}</div>
+            <div className="font-serif text-[19px] font-bold">{pass.event.title}</div>
           </div>
           <div className="whitespace-nowrap rounded-full bg-honey px-3 py-1.5 text-[11px] font-extrabold text-charcoal">
             {stampedCount} Stamped
@@ -66,8 +63,8 @@ export default async function PassportPage({
       <div className="p-5">
         <div className="mb-3.5 font-serif text-base font-bold">Your stops</div>
         <div className="flex flex-col gap-2.5">
-          {event.stops.map((stop) => {
-            const stamped = pass.stampedStopIds.includes(stop.id);
+          {pass.event.stops.map((stop) => {
+            const stamped = stampedStopIds.has(stop.id);
             return (
               <div
                 key={stop.id}

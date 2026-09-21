@@ -1,4 +1,5 @@
 import { FAIR_MARKET_VALUE_DISCLAIMER } from "@/lib/site-config";
+import { AgentInquiryForm } from "@/components/agent-inquiry-form";
 
 const PACKAGES = [
   {
@@ -54,9 +55,7 @@ export default function AgentsPage() {
                 <div key={bullet}>{bullet}</div>
               ))}
             </div>
-            <button className="w-full rounded-full bg-sage py-3 text-xs font-bold text-linen hover:bg-sage-dark">
-              Request Info
-            </button>
+            <AgentInquiryForm packageInterest={pkg.type} />
           </div>
         ))}
       </section>
