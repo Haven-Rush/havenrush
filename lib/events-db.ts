@@ -52,7 +52,18 @@ export function topReward(event: Event): string | undefined {
  */
 export function formatEventDateLabel(event: Event): string {
   const timeZone = "America/Chicago";
-  const sameDay = event.startsAt.toDateString() === event.endsAt.toDateString();
+  // Compare calendar days *in timeZone*, not via toDateString() (server
+  // local time — UTC on Vercel). An event like 3pm-7pm Central crosses
+  // midnight UTC, so toDateString() saw it as two different days and this
+  // always fell into the multi-day branch below, rendering single-day
+  // events as e.g. "Oct 24–24" instead of "Oct 24".
+  const dayKey = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const sameDay = dayKey.format(event.startsAt) === dayKey.format(event.endsAt);
 
   if (sameDay) {
     const formatted = new Intl.DateTimeFormat("en-US", {
@@ -64,12 +75,16 @@ export function formatEventDateLabel(event: Event): string {
     return `${formatted} · ${event.neighborhood}, ${event.city}`;
   }
 
+  const monthKey = new Intl.DateTimeFormat("en-US", { timeZone, month: "short" });
+  const sameMonth = monthKey.format(event.startsAt) === monthKey.format(event.endsAt);
+
   const startFormatted = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     timeZone,
   }).format(event.startsAt);
   const endFormatted = new Intl.DateTimeFormat("en-US", {
+    month: sameMonth ? undefined : "short",
     day: "numeric",
     timeZone,
   }).format(event.endsAt);

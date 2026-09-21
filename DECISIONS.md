@@ -1,5 +1,40 @@
 # Decisions & assumptions
 
+## Fix single-day events showing as a range, e.g. "Oct 24–24" (2026-09-22)
+`formatEventDateLabel` (`lib/events-db.ts`) decided same-day vs. multi-day
+with `event.startsAt.toDateString() === event.endsAt.toDateString()` —
+but `toDateString()` reads the *server's local* timezone, while the
+function's actual output formatting explicitly used `America/Chicago`.
+Vercel's server runs in UTC. A same-day Central-time event (e.g.
+3pm–7pm) has its end time cross midnight UTC (19:00 -05:00 = 00:00 UTC
+the next day), so the two `toDateString()` values differed even though
+the event never left Oct 24 in Central time. That pushed every same-day
+event into the multi-day branch, which formatted the end date with
+`day: "numeric"` only (no month) — producing "Oct 24–24".
+
+Fixed by comparing calendar days *in the same `America/Chicago` zone*
+the rest of the function already uses, via `Intl.DateTimeFormat("en-CA",
+{ timeZone, year, month, day })` (produces a plain `YYYY-MM-DD` string,
+safe to compare for equality) instead of `toDateString()`. While in
+there, also fixed a related latent bug in the multi-day branch: it always
+omitted the month from the end date, so a cross-month event (none exist
+in the current seed data, but nothing prevented one) would've rendered
+as "Oct 31–1" instead of "Oct 31–Nov 1" — now compares the two months
+the same timezone-safe way and only omits the month when it's the same.
+
+This function is the single source for the date label across the events
+feed, the event detail page, and the `/api/events`, `/api/events/[slug]`,
+and `/api/passport/[token]` routes — fixing it here fixes all of them.
+Verified with `tsx` against fixed `Date` objects for the same-day,
+same-month-range, and cross-month cases (no DB connection needed, since
+the function is pure) rather than rendering the pages, which now require
+`DATABASE_URL`/`DIRECT_URL` this sandbox still doesn't have.
+
+Also added the date label to the event detail page — it read
+`{event.neighborhood} · {event.city}` with no date at all before this
+change (the events feed already showed a date; the detail page never
+had), using the same now-fixed `formatEventDateLabel`.
+
 ## Strip a dotenv log line that had leaked into migration.sql (2026-09-21)
 The P3009 failure in the previous entry turned out to have a second layer:
 once `PRISMA_RESOLVE_ROLLED_BACK` cleared the stuck failed-migration
