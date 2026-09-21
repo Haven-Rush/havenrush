@@ -1,5 +1,63 @@
 # Decisions & assumptions
 
+## Admin tools, step 1: auth + shell + event list (2026-09-22)
+
+### Password auth: scrypt + a signed cookie, no library
+Single shared password (no user accounts), per instruction. Hashed with
+Node's built-in `scrypt` (`lib/admin-auth.ts`), stored as `salt:hash` hex
+in `ADMIN_PASSWORD_HASH` — no new dependency (avoids bcrypt's native
+bindings, which can be friction on serverless). The session is a cookie
+holding `base64url(JSON{exp}).HMAC-SHA256(that, SESSION_SECRET)` — no
+session table, no JWT library. `isValidSessionCookieValue` checks the
+signature with `timingSafeEqual` before ever parsing the payload.
+`scripts/hash-admin-password.ts` is the "one-time script" asked for; it
+reads the password from stdin (supports both an interactive masked
+prompt and `echo -n pw | npm run admin:hash-password`), never from a CLI
+arg, so it doesn't land in shell history.
+
+### `middleware.ts` doesn't exist in this Next.js version — it's `proxy.ts`
+Built it as `middleware.ts` first, matching the file name every Next.js
+doc and tutorial in training data uses. `npm run build` warned it's
+deprecated in favor of `proxy.ts` (renamed in this project's Next.js
+16.3.5). Also different in a way that mattered here: the doc bundled in
+`node_modules/next/dist/docs` says *"Proxy defaults to using the Node.js
+runtime. The `runtime` config option is not available in Proxy files.
+Setting the `runtime` config option in Proxy will throw an error."*
+The old middleware convention defaulted to the Edge runtime, which
+doesn't have `node:crypto` (needed for the scrypt/HMAC session check),
+so the plan had been to force `export const runtime = "nodejs"` — under
+the new `proxy.ts` convention that line would have broken the build
+outright, and turned out to be unnecessary anyway, since Proxy always
+runs on Node.js now. Renamed the file, the exported function
+(`proxy`, not `middleware`), and dropped that line entirely.
+
+### Route structure: `app/admin/login` outside auth, `app/admin/(authenticated)` inside it
+`proxy.ts` gates everything under `/admin/*` except `/admin/login`
+(matched by exact pathname before the cookie check). The shell chrome
+(header, "View site" link, log out button) lives in
+`app/admin/(authenticated)/layout.tsx`, a route group that doesn't affect
+the URL — `/admin` still resolves to
+`app/admin/(authenticated)/page.tsx` — so the shell only wraps pages a
+valid session can already reach; the login page never renders it. No
+`app/admin/layout.tsx` was needed for shared chrome: `/admin/*` sits
+outside the `(site)` route group already, so it inherits none of the
+public `SiteHeader`/`SiteFooter` from the root layout for free.
+
+### Verified the auth flow directly (not the event list — no DB here)
+Ran the full flow with Playwright against a locally-generated test
+password/hash: unauthenticated `/admin` → redirect to
+`/admin/login?next=%2Fadmin`; wrong password → `?error=1`, no cookie
+set; correct password → redirected to the original `next` target with a
+`httpOnly`/`sameSite=Lax` cookie set. Confirmed via the server-side
+error message itself that the authenticated request truly reached
+`/admin`'s page code (it failed on the expected
+`Environment variable not found: DATABASE_URL`, from
+`listEventsForAdmin()`'s Prisma call) rather than being silently
+redirected back — i.e., the auth gate passed a real request through, it
+just has nowhere to query in this sandbox. The event list's actual
+rendering (and the rest of steps 2-4) still can't be visually verified
+here until `DATABASE_URL`/`DIRECT_URL` are reachable.
+
 ## Strip a dotenv log line that had leaked into migration.sql (2026-09-21)
 The P3009 failure in the previous entry turned out to have a second layer:
 once `PRISMA_RESOLVE_ROLLED_BACK` cleared the stuck failed-migration

@@ -12,7 +12,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "admin:hash-password": "tsx scripts/hash-admin-password.ts"
   },
   "dependencies": {
     "@prisma/client": "^6",
