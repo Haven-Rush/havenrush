@@ -1,5 +1,17 @@
 # Decisions & assumptions
 
+## Remove `/api/health/self-check` after a confirmed-good production check (2026-09-22)
+Ran against the live deployment (by the user, since this sandbox still
+can't reach `havenrush.com`): `{"ok":true,"events":{"count":5},
+"scanTokenLookup":{"resolvedCorrectStop":true,"resolvedCorrectEvent":true},
+"invalidScanTokenLookup":{"resolvedToNull":true}}` — all 5 seeded events
+present, a real stop's scanToken resolves to the correct stop and event,
+and an invalid token correctly resolves to `null`. Confirms Postgres is
+reachable from the deployment and the scan/check-in data path works
+end-to-end. Removed the route now that it's served its purpose — it was
+explicitly temporary (see the entry below), not meant to stay as
+permanent infrastructure.
+
 ## Temporary `/api/health/self-check` route (2026-09-22)
 Added to verify the production deployment can reach Postgres and resolve a
 real event/scanToken, since this sandbox's network egress policy blocks
