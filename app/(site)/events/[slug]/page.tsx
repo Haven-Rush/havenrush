@@ -2,18 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EVENT_TYPES } from "@/lib/event-types";
 import {
-  EVENTS,
-  getEventBySlug,
+  getEventDetailBySlug,
   homesCount,
   hostingBrokerages,
   tastingStopsCount,
   topReward,
-} from "@/lib/seed-data";
+} from "@/lib/events-db";
 import { RsvpFlow } from "@/components/rsvp-flow";
 
-export function generateStaticParams() {
-  return EVENTS.map((event) => ({ slug: event.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function EventDetailPage({
   params,
@@ -21,7 +18,7 @@ export default async function EventDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const event = getEventBySlug(slug);
+  const event = await getEventDetailBySlug(slug);
   if (!event) notFound();
 
   const brokerages = hostingBrokerages(event);
@@ -40,7 +37,7 @@ export default async function EventDetailPage({
       </div>
       <h1 className="mb-2 font-serif text-[clamp(26px,3.8vw,36px)] font-bold">{event.title}</h1>
       <p className="mb-2 text-sm text-charcoal/55">
-        {event.neighborhood} · {event.city}, {event.state}
+        {event.neighborhood} · {event.city}
       </p>
       {brokerages.length > 0 && (
         <p className="mb-7 text-[13px] text-charcoal/60">
@@ -62,7 +59,7 @@ export default async function EventDetailPage({
         <Stat label="Reward" value={topReward(event) ?? "—"} accent />
       </div>
 
-      <RsvpFlow demoPassportToken="demo-pass-a1b2c3d4" />
+      <RsvpFlow eventSlug={event.slug} />
     </section>
   );
 }

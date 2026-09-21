@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CONSENT_TEXT } from "@/lib/site-config";
 
 type Timeline = "JUST_LOOKING" | "MOVING_SOON";
 type Intent = "BUYING" | "RENTING";
@@ -16,15 +17,16 @@ const INTENT_OPTIONS: { value: Intent; label: string }[] = [
   { value: "RENTING", label: "Renting" },
 ];
 
-/**
- * Phase 1: visual flow only, local state. Phase 4 wires "Continue" to
- * POST /api/rsvp (with email + consent) and links to the real pass token
- * it returns instead of the demo passport below.
- */
-export function RsvpFlow({ demoPassportToken }: { demoPassportToken: string }) {
+export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
   const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [timeline, setTimeline] = useState<Timeline>("JUST_LOOKING");
   const [intent, setIntent] = useState<Intent>("BUYING");
+  const [agentContactConsent, setAgentContactConsent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [passToken, setPassToken] = useState<string | null>(null);
 
   if (step === 0) {
     return (
@@ -41,9 +43,69 @@ export function RsvpFlow({ demoPassportToken }: { demoPassportToken: string }) {
   }
 
   if (step === 1) {
+    const canSubmit = email.trim().length > 0 && !submitting;
+
+    const handleSubmit = async () => {
+      setError(null);
+      setSubmitting(true);
+      try {
+        const res = await fetch("/api/rsvp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventSlug,
+            email: email.trim(),
+            name: name.trim() || undefined,
+            intent,
+            timeline,
+            agentContactConsent,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error ?? "Something went wrong. Please try again.");
+        }
+        setPassToken(data.token);
+        setStep(2);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
     return (
       <div className="rounded-2xl border border-sage/20 bg-linen p-6">
         <h3 className="mb-[18px] font-serif text-[17px] font-bold">Quick preferences</h3>
+
+        <div className="mb-[18px]">
+          <label className="mb-2 block text-xs font-bold text-charcoal/60" htmlFor="rsvp-email">
+            Email
+          </label>
+          <input
+            id="rsvp-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="w-full rounded-xl border border-charcoal/15 bg-white px-3.5 py-2.5 text-sm text-charcoal outline-none focus:border-sage"
+          />
+        </div>
+
+        <div className="mb-[18px]">
+          <label className="mb-2 block text-xs font-bold text-charcoal/60" htmlFor="rsvp-name">
+            Name (optional)
+          </label>
+          <input
+            id="rsvp-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Jordan Rivera"
+            className="w-full rounded-xl border border-charcoal/15 bg-white px-3.5 py-2.5 text-sm text-charcoal outline-none focus:border-sage"
+          />
+        </div>
 
         <PillGroup
           label="Timeline"
@@ -57,14 +119,27 @@ export function RsvpFlow({ demoPassportToken }: { demoPassportToken: string }) {
           options={INTENT_OPTIONS}
           value={intent}
           onChange={setIntent}
-          marginClass="mb-[22px]"
+          marginClass="mb-[18px]"
         />
 
+        <label className="mb-[22px] flex items-start gap-2.5 text-[13px] leading-relaxed text-charcoal/70">
+          <input
+            type="checkbox"
+            checked={agentContactConsent}
+            onChange={(e) => setAgentContactConsent(e.target.checked)}
+            className="mt-0.5 h-4 w-4 flex-shrink-0"
+          />
+          <span>{CONSENT_TEXT}</span>
+        </label>
+
+        {error && <p className="mb-4 text-[13px] font-semibold text-red-700">{error}</p>}
+
         <button
-          onClick={() => setStep(2)}
-          className="rounded-full bg-sage px-[26px] py-[13px] text-[13px] font-bold text-linen hover:bg-sage-dark"
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          className="rounded-full bg-sage px-[26px] py-[13px] text-[13px] font-bold text-linen hover:bg-sage-dark disabled:opacity-50"
         >
-          Continue
+          {submitting ? "Submitting…" : "Continue"}
         </button>
       </div>
     );
@@ -76,12 +151,14 @@ export function RsvpFlow({ demoPassportToken }: { demoPassportToken: string }) {
         ✓
       </div>
       <h3 className="mb-[18px] font-serif text-xl font-bold">You&apos;re in.</h3>
-      <Link
-        href={`/passport/${demoPassportToken}`}
-        className="inline-block rounded-full bg-honey px-6 py-3 text-[13px] font-bold text-charcoal no-underline hover:brightness-95"
-      >
-        View Mobile Passport
-      </Link>
+      {passToken && (
+        <Link
+          href={`/passport/${passToken}`}
+          className="inline-block rounded-full bg-honey px-6 py-3 text-[13px] font-bold text-charcoal no-underline hover:brightness-95"
+        >
+          View Mobile Passport
+        </Link>
+      )}
     </div>
   );
 }

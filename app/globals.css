@@ -12,15 +12,17 @@
   --font-sans: var(--font-jakarta), -apple-system, sans-serif;
 }
 
-body {
-  background: var(--color-linen);
-  color: var(--color-charcoal);
-}
+@layer base {
+  body {
+    background: var(--color-linen);
+    color: var(--color-charcoal);
+  }
 
-a {
-  color: var(--color-sage);
-}
+  a {
+    color: var(--color-sage);
+  }
 
-a:hover {
-  color: var(--color-sage-dark);
+  a:hover {
+    color: var(--color-sage-dark);
+  }
 }

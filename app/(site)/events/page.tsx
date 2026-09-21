@@ -1,25 +1,25 @@
 import Link from "next/link";
 import { EVENT_TYPES } from "@/lib/event-types";
-import { EVENTS } from "@/lib/seed-data";
+import { formatEventDateLabel, listEvents } from "@/lib/events-db";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Upcoming hunts | Haven Rush",
 };
 
-export default function EventsPage() {
-  const upcoming = [...EVENTS].sort(
-    (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-  );
+export default async function EventsPage() {
+  const events = await listEvents();
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 sm:px-8">
       <h1 className="mb-9 font-serif text-[clamp(26px,3.6vw,36px)] font-bold">Upcoming hunts</h1>
       <div className="flex flex-col">
-        {upcoming.map((event, index) => (
+        {events.map((event, index) => (
           <div
-            key={event.id}
+            key={event.slug}
             className={`flex flex-wrap items-center justify-between gap-4 py-[22px] ${
-              index < upcoming.length - 1 ? "border-b border-charcoal/10" : ""
+              index < events.length - 1 ? "border-b border-charcoal/10" : ""
             }`}
           >
             <div>
@@ -27,7 +27,7 @@ export default function EventsPage() {
                 {EVENT_TYPES[event.type].label}
               </div>
               <div className="mb-1 font-serif text-[19px] font-bold">{event.title}</div>
-              <div className="text-[13px] text-charcoal/60">{event.dateLabel}</div>
+              <div className="text-[13px] text-charcoal/60">{formatEventDateLabel(event)}</div>
             </div>
             <Link
               href={`/events/${event.slug}`}

@@ -1,5 +1,135 @@
 # Decisions & assumptions
 
+## Backend build: API routes, DB wiring, Vercel migrate/seed (2026-09-21)
+
+### Step 1 (DB) blocked, then descoped for this pass
+`DATABASE_URL`/`DIRECT_URL` are not set in this sandbox at all (not just
+empty — absent from the environment and no `.env` file exists). Confirmed
+by running `prisma migrate deploy` directly: it fails before touching the
+network, at schema validation —
+
+```
+Error: Prisma schema validation - (get-config wasm)
+Error code: P1012
+error: Environment variable not found: DIRECT_URL.
+```
+
+Per instruction, `migrate deploy` and `db seed` were not run here. Row
+Level Security was already handled in an earlier commit on this branch
+(migration `20260920221304_enable_row_level_security`, all 9 tables, no
+policies) — nothing new was needed for that part once a real DB connects.
+Given the CLI here has no path to Supabase, the user asked to proceed with
+the API/wiring work regardless and to make migrations + seeding runnable
+from Vercel instead, where the real env vars live. See README (once
+updated) / the PR description for the exact Vercel setup steps.
+
+### `lib/prisma.ts`
+Standard Next.js singleton (`globalThis`-cached `PrismaClient`), so dev's
+module hot-reloading doesn't open a new connection pool per edit.
+
+### Query helpers instead of routes calling routes
+Server Components (`/events`, `/events/[slug]`, `/passport/[token]`) query
+Prisma directly through shared helpers in `lib/events-db.ts` and
+`lib/passport-db.ts`, rather than `fetch`-ing this app's own API routes —
+the routes exist because the brief asked for them (and they're useful for
+any future non-Next client), but a server component calling its own HTTP
+API over the network would be a pointless round trip. Both the pages and
+the route handlers import the same helpers, so the query and
+derived-field logic (`homesCount`, `hostingBrokerages`, reward-tier
+parsing, date-label formatting) isn't duplicated.
+
+### `scanToken` is never returned by a JSON API
+`GET /api/events/[slug]` lists an event's stops but omits each stop's
+`scanToken`, and `GET /api/passport/[token]` only exposes a `stamped`
+boolean per stop, never the token. A stop's `scanToken` is the credential
+that stamps it — the whole scavenger-hunt mechanic depends on it only
+being reachable by physically scanning the QR code at that stop. Putting
+it in a public JSON response would let anyone stamp any pass for any stop
+remotely, with no visit required. (The `/s/[scanToken]` QR landing page
+that actually consumes it is still Phase 3/4, per the existing Phase 1
+entry below.)
+
+### RSVP → consent-gated lead forwarding
+`POST /api/rsvp` upserts the Attendee (by email) and the Pass (unique on
+`attendeeId`+`eventId`, so re-RSVPing to the same event updates the
+existing pass instead of erroring or duplicating), storing
+`agentContactConsent`, `consentedAt` (`null` unless consent is `true`),
+and the exact `consentText` shown (`lib/site-config.ts`'s `CONSENT_TEXT`)
+— per product rule 1. `LeadDelivery` rows (one per unique agent behind the
+event's `LISTING` stops) are created **only** when
+`agentContactConsent === true`; with no consent, zero `LeadDelivery` rows
+exist for that pass, so there is nothing for any future dispatcher to
+send. Actually delivering a lead (calling an `Agent.crmWebhookUrl`) is out
+of scope here — this pass only creates the `PENDING` record consent
+gates.
+
+Pass tokens use `crypto.randomUUID()` (product rule 6: unguessable,
+non-sequential).
+
+### `POST /api/stamps/scan`: idempotent + rate-limited
+Idempotent via a `findUnique` check before create on the
+`passId_stopId` unique constraint (returns `alreadyStamped: true` instead
+of erroring on a repeat scan), with a create-then-catch-P2002 fallback for
+the race where two requests hit at once. Rate limiting
+(`lib/rate-limit.ts`) is an in-memory fixed window keyed on
+`ip:passToken`, which is a real limitation: it's per-instance and resets
+on cold start, so it won't hold a limit across multiple concurrent Vercel
+instances. Flagging this rather than pretending it's production-grade —
+swapping in a shared store (e.g. Upstash Redis) is the fix if this needs
+to be tight at scale.
+
+### `Event.state` isn't a DB column
+`lib/seed-data.ts`'s `SeedEvent` shape carries a `state` field (all `"TX"`
+placeholder data), but the Prisma `Event` model never had one — only
+`neighborhood`/`city`. Rather than add a column for this pass, the event
+detail page's location line was changed from `{neighborhood} · {city},
+{state}` to `{neighborhood} · {city}`. Flagging in case `state` should
+become a real column later (e.g. once markets outside Texas exist).
+
+### Pages need `export const dynamic = "force-dynamic"`
+This Next.js version's default caching model (Cache Components is opt-in
+via `cacheComponents: true` in `next.config.ts`, not set here) will still
+attempt to statically prerender a page at build time unless told
+otherwise, even one that's just an async Server Component doing a Prisma
+call with no `fetch`. Without `DATABASE_URL`, that prerender attempt would
+throw during `next build`. `/events`, `/events/[slug]`, and
+`/passport/[token]` (all DB-backed, all meant to be fresh per request
+anyway — no login, live stamp/RSVP data) now export
+`dynamic = "force-dynamic"`, and `/events/[slug]`'s old
+`generateStaticParams` (which read `lib/seed-data.ts`) was removed.
+Verified by running `npm run build` in this sandbox with no
+`DATABASE_URL`/`DIRECT_URL` set at all — it completes, and the route
+summary correctly marks those three plus all `/api/*` routes as `ƒ`
+(server-rendered on demand) rather than trying to prerender them. `/` and
+`/agents` stay static since neither touches the DB.
+
+### Vercel: migrations + build-time seed (superseded, see below)
+Added a `vercel-build` script running `prisma generate && prisma migrate
+deploy && next build`, alongside the existing `build` script (unchanged,
+so local/CI builds without DB credentials still work — verified above),
+plus a `POST /api/admin/seed` endpoint (secret-gated via `SEED_SECRET`)
+as a way to trigger the already-idempotent `prisma/seed-runner.ts` once
+Vercel had real DB credentials. Replaced by the simpler build-time-flag
+approach below at the user's request, since they can't run terminal
+commands (e.g. `curl`) to hit an endpoint after deploy.
+
+### Simplified: `SEED_ON_BUILD` flag instead of an admin endpoint (2026-09-21)
+Removed `POST /api/admin/seed` and `SEED_SECRET` entirely — no endpoint,
+no secret to manage. `vercel-build` is now `sh scripts/vercel-build.sh`,
+which runs `prisma generate`, `prisma migrate deploy`, then `npm run
+db:seed` **only** when the `SEED_ON_BUILD` env var is exactly the string
+`"true"`, then `next build`. `prisma/seed-runner.ts` was already built
+entirely out of upserts (or an existence check before create), keyed on
+each table's natural unique field, so it's safe to leave
+`SEED_ON_BUILD=true` set permanently in Vercel — every build re-applies
+the same placeholder rows rather than duplicating them, and non-placeholder
+rows (real attendees, real stamps) are untouched since the seed only ever
+touches the fixed set of keys in `lib/seed-data.ts`. A shell script (vs.
+inlining the conditional in `package.json`) so the seed step's own
+failure still fails the build (`set -e`), rather than a one-liner's
+`||`-based skip-logic accidentally swallowing a real seed error along
+with the "flag not set" case.
+
 ## CLAUDE.md replaced verbatim; Home Fair copy/seed corrected (2026-09-21)
 The user supplied an updated CLAUDE.md and asked that the repo's copy be
 replaced with it exactly. Beyond the Vocabulary section (expected — it's
