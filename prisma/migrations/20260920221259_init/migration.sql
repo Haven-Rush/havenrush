@@ -1,6 +1,3 @@
-◇ injected env (0) from .env
-Loaded Prisma config from prisma.config.ts.
-
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
