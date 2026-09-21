@@ -103,31 +103,32 @@ summary correctly marks those three plus all `/api/*` routes as `ƒ`
 (server-rendered on demand) rather than trying to prerender them. `/` and
 `/agents` stay static since neither touches the DB.
 
-### Vercel: migrations + a safe, idempotent seed trigger
-Added a `vercel-build` script
-(`prisma generate && prisma migrate deploy && next build`) alongside the
-existing `build` script (`prisma generate && next build`, unchanged, so
-local/CI builds without DB credentials still work — verified above).
-Vercel supports auto-detecting a `vercel-build` script, but that behavior
-isn't guaranteed across framework presets, so the safe instruction is to
-also explicitly set it as the Project's Build Command (see README /
-PR description for the exact steps) rather than rely on it being picked
-up implicitly.
+### Vercel: migrations + build-time seed (superseded, see below)
+Added a `vercel-build` script running `prisma generate && prisma migrate
+deploy && next build`, alongside the existing `build` script (unchanged,
+so local/CI builds without DB credentials still work — verified above),
+plus a `POST /api/admin/seed` endpoint (secret-gated via `SEED_SECRET`)
+as a way to trigger the already-idempotent `prisma/seed-runner.ts` once
+Vercel had real DB credentials. Replaced by the simpler build-time-flag
+approach below at the user's request, since they can't run terminal
+commands (e.g. `curl`) to hit an endpoint after deploy.
 
-For seeding, `prisma/seed.ts`'s logic moved into `prisma/seed-runner.ts`
-as an exported `runSeed(prisma)` — unchanged otherwise, since it was
-already built entirely out of upserts (or an existence check before
-create), keyed on each table's natural unique field. That's what makes it
-safe to describe as "safe to re-trigger": running it again updates
-existing rows in place rather than duplicating them. `prisma/seed.ts`
-(the CLI entry point for `prisma db seed` / `npm run db:seed`) is now a
-thin wrapper calling `runSeed`. `POST /api/admin/seed` calls the same
-function over HTTP, once Vercel actually has `DATABASE_URL`/`DIRECT_URL`,
-gated by a shared secret (`SEED_SECRET` env var, compared with
-`crypto.timingSafeEqual`, sent as the `x-seed-secret` header) rather than
-left open, since it's a DB-writing endpoint. With `SEED_SECRET` unset, the
-route 501s instead of silently allowing or silently seeding — it has to
-be turned on deliberately.
+### Simplified: `SEED_ON_BUILD` flag instead of an admin endpoint (2026-09-21)
+Removed `POST /api/admin/seed` and `SEED_SECRET` entirely — no endpoint,
+no secret to manage. `vercel-build` is now `sh scripts/vercel-build.sh`,
+which runs `prisma generate`, `prisma migrate deploy`, then `npm run
+db:seed` **only** when the `SEED_ON_BUILD` env var is exactly the string
+`"true"`, then `next build`. `prisma/seed-runner.ts` was already built
+entirely out of upserts (or an existence check before create), keyed on
+each table's natural unique field, so it's safe to leave
+`SEED_ON_BUILD=true` set permanently in Vercel — every build re-applies
+the same placeholder rows rather than duplicating them, and non-placeholder
+rows (real attendees, real stamps) are untouched since the seed only ever
+touches the fixed set of keys in `lib/seed-data.ts`. A shell script (vs.
+inlining the conditional in `package.json`) so the seed step's own
+failure still fails the build (`set -e`), rather than a one-liner's
+`||`-based skip-logic accidentally swallowing a real seed error along
+with the "flag not set" case.
 
 ## CLAUDE.md replaced verbatim; Home Fair copy/seed corrected (2026-09-21)
 The user supplied an updated CLAUDE.md and asked that the repo's copy be
