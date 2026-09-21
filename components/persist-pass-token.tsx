@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { storePassToken } from "@/lib/pass-storage";
 
 /** Renders nothing — just stores the pass token for this event on mount. */
-export function PersistPassToken({ eventId, token }: { eventId: string; token: string }) {
+export function PersistPassToken({ eventSlug, token }: { eventSlug: string; token: string }) {
   useEffect(() => {
-    storePassToken(eventId, token);
-  }, [eventId, token]);
+    storePassToken(eventSlug, token);
+  }, [eventSlug, token]);
 
   return null;
 }

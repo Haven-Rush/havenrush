@@ -1,5 +1,68 @@
 # Decisions & assumptions
 
+## QR check-in, steps 3-4: email fallback, RSVP-time persistence, PR (2026-09-22)
+
+### Storage key changed from event id to event slug
+The entry below describes keying `lib/pass-storage.ts` by `eventId`. That
+changed here: adding RSVP-time persistence to `components/rsvp-flow.tsx`
+needs *some* event identifier, and that component only has `eventSlug`
+as a prop — `POST /api/rsvp`'s response is just `{ token }`, no event id,
+and widening that response only to serve this felt like the wrong fix
+next to just using the identifier already at hand. The passport and scan
+pages both already load the event's `slug` alongside its `id` (it's a
+plain scalar field pulled in by their existing `include`/`select`), so
+switching the storage key to `slug` everywhere cost nothing there and
+meant `POST /api/rsvp`'s contract didn't need to change at all — same
+reasoning as leaving `POST /api/stamps/scan` alone for the stamp count in
+the step 1-2 entry below. `Event.slug` is `@unique`, so it's exactly as
+safe a key as `id` was.
+
+### RSVP-time persistence: same store, same key, written from a second call site
+`components/rsvp-flow.tsx` now calls `storePassToken(eventSlug,
+data.token)` the moment `POST /api/rsvp` succeeds, right alongside the
+existing `setPassToken`/`setStep(2)` — before the attendee ever sees the
+"View Mobile Passport" link, let alone clicks it. This is the same
+function the passport page's `PersistPassToken` calls; between the two,
+a token lands in storage whichever of "RSVP, then close the tab" or
+"RSVP, then actually open the passport" happens, without either call
+site needing to know about the other.
+
+### Email fallback: reuses `stampWithToken`, so it "completes the stamp the same way" for real
+Pulled the scan-and-classify logic out of the auto-check effect into a
+standalone `stampWithToken(passToken, scanToken)` so the email-lookup
+form's submit handler and the effect call the literal same function,
+rather than two copies of the same response-handling `if`-chain drifting
+apart over time. On a successful lookup, `storePassToken` runs before
+the stamp attempt — same store, same key as the other two write sites —
+so the next stop at the same event skips the form entirely.
+
+### New endpoint: `POST /api/passport/lookup`, rate-limited per IP
+Needed *some* server endpoint for "event + email -> pass token" that
+didn't exist yet. Modeled on `POST /api/stamps/scan`'s shape (typed body
+parsing, a 429 with `Retry-After` on rate limit, `{ error }` on failure)
+but limited per-IP only, with no secondary key — `POST /api/stamps/scan`
+partly limits per-`passToken` too, but there's no equivalent second
+dimension to key on here (an attacker gets to pick the email freely).
+This is deliberately an email-guessing surface — enter an event slug and
+an email, get back a working pass token if that attendee RSVP'd — which
+is the explicit ask ("falls back to looking up the pass by event +
+email"). The rate limit is a real but partial mitigation, not a claim
+that this is a hardened endpoint; noting it plainly rather than either
+skipping the limit or overbuilding something more elaborate than asked
+for.
+
+### Verification, again blocked on a live database — tried to confirm that's still true before assuming it
+Re-checked `DATABASE_URL`/`DIRECT_URL` in this sandbox before writing
+this off again (length-only, never printed) — still unset. Every state
+of `/s/[scanToken]` runs a Prisma query before it can render anything,
+`POST /api/passport/lookup` is a new DB-backed endpoint with no page of
+its own to inspect, and `components/rsvp-flow.tsx` only mounts on the
+DB-backed `/events/[slug]` page — so nothing this pass touches is
+reachable without one, unlike the admin-tools work where at least one
+page rendered DB-free. Verified `npm run build` and `npm run lint` clean,
+and grepped for any leftover `eventId` reference across the touched
+files after the slug rename (none).
+
 ## QR check-in, steps 1-2: pass persistence + /s/[scanToken] (2026-09-22)
 
 ### localStorage, keyed by event id — not a single global slot, not a cookie

@@ -44,7 +44,7 @@ export default async function ScanPage({
     <ScanCheckIn
       stopName={stop.name}
       stopKind={stop.kind}
-      eventId={stop.event.id}
+      eventSlug={stop.event.slug}
       eventTitle={stop.event.title}
       totalStops={totalStops}
     />

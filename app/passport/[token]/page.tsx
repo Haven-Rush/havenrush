@@ -23,7 +23,7 @@ export default async function PassportPage({
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-linen pb-24 text-charcoal">
-      <PersistPassToken eventId={pass.event.id} token={token} />
+      <PersistPassToken eventSlug={pass.event.slug} token={token} />
       <div className="mb-2 px-4 pt-6 text-center">
         <Link href="/" className="text-[11px] font-semibold text-sage no-underline">
           ← Haven Rush
