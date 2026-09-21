@@ -52,7 +52,17 @@ export function topReward(event: Event): string | undefined {
  */
 export function formatEventDateLabel(event: Event): string {
   const timeZone = "America/Chicago";
-  const sameDay = event.startsAt.toDateString() === event.endsAt.toDateString();
+  // Compare calendar dates in `timeZone`, not the server's local zone (UTC
+  // on Vercel) — `.toDateString()` disagreed with the zoned output below
+  // whenever an event's start/end crossed a UTC day boundary without
+  // crossing a Central one, producing "Oct 24–24" instead of "Oct 24".
+  const dateKey = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const sameDay = dateKey.format(event.startsAt) === dateKey.format(event.endsAt);
 
   if (sameDay) {
     const formatted = new Intl.DateTimeFormat("en-US", {

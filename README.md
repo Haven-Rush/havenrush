@@ -78,23 +78,34 @@ without `DATABASE_URL`/`DIRECT_URL` set — but Vercel still needs both, plus
 a couple of one-time setup steps:
 
 1. **Project Settings → Environment Variables**: add `DATABASE_URL` and
-   `DIRECT_URL` (from Supabase, see **Setup** above). Optionally add
-   `SEED_ON_BUILD="true"` to also seed placeholder data on every build —
-   the seed is idempotent (`prisma/seed-runner.ts` is all upserts), so
-   this is safe to leave on permanently rather than needing a one-time
-   trigger.
+   `DIRECT_URL` (from Supabase, see **Setup** above).
 2. **Project Settings → Build & Development Settings → Build Command**:
    override it to `npm run vercel-build`. This runs
-   `prisma generate && prisma migrate deploy`, then the seed if
-   `SEED_ON_BUILD=true`, then `next build` — see `scripts/vercel-build.sh`.
-   Schema migrations then ship automatically on every deploy; you should
-   not need to run `prisma migrate deploy` by hand against production.
+   `prisma generate && prisma migrate deploy`, then `next build` — see
+   `scripts/vercel-build.sh`. Schema migrations then ship automatically on
+   every deploy; you should not need to run `prisma migrate deploy` by
+   hand against production.
+
+Two optional build-time flags exist for one-time situations and should
+**not** be left set permanently:
+- `SEED_ON_BUILD="true"` — re-runs `npm run db:seed` on every build. The
+  seed is idempotent, so it's harmless to leave on, but pointless once
+  the database has its placeholder data — it just adds a Postgres round
+  trip to every deploy.
+- `PRISMA_RESOLVE_ROLLED_BACK` — a migration-recovery knob (see the
+  comment in `scripts/vercel-build.sh`) for the specific case where a
+  build died mid-migration and left one recorded as failed. Only ever
+  needed once, to clear that specific stuck migration.
+
+Both are read with a guarded `if`, so `vercel-build.sh` runs the same way
+whether they're set or not — safe to remove from Vercel once you don't
+need them.
 
 ## Admin
 
 `/admin` lets you create/edit events, stops, and view RSVPs without
 touching code. It's gated by a single shared password (no user accounts) —
-a signed session cookie, checked in `middleware.ts`, not a full auth
+a signed session cookie, checked in `proxy.ts`, not a full auth
 library. Setup:
 
 1. Generate a password hash: `npm run admin:hash-password` (prompts for a
