@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CONSENT_TEXT } from "@/lib/site-config";
+import { storePassToken } from "@/lib/pass-storage";
 
 type Timeline = "JUST_LOOKING" | "MOVING_SOON";
 type Intent = "BUYING" | "RENTING";
@@ -65,6 +66,10 @@ export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
         if (!res.ok) {
           throw new Error(data.error ?? "Something went wrong. Please try again.");
         }
+        // Persist immediately — don't wait for a passport-page visit that
+        // might never happen (e.g. they close this tab from the "You're
+        // in" screen without clicking through).
+        storePassToken(eventSlug, data.token);
         setPassToken(data.token);
         setStep(2);
       } catch (err) {
