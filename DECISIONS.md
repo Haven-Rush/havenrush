@@ -1,5 +1,25 @@
 # Decisions & assumptions
 
+## Temporary `/api/health/self-check` route (2026-09-22)
+Added to verify the production deployment can reach Postgres and resolve a
+real event/scanToken, since this sandbox's network egress policy blocks
+fetching `havenrush.com` directly (see the previous entry) — running the
+check server-side, inside the deployment, sidesteps that instead of
+depending on egress being relaxed. Checks: total event count + slugs
+(`listEvents()`), a real stop's scanToken resolving to the right stop and
+event (`getStopByScanToken`), that stop count agrees between the two ways
+it's computed (`countStopsForEvent` vs. the Prisma `include`), and that an
+obviously-invalid token resolves to `null` rather than throwing.
+
+Deliberately never echoes the scanToken it looks up — only booleans/counts
+derived from the lookup — consistent with CLAUDE.md's "never expose a
+scanToken in a JSON response" rule; the route reveals nothing `/api/events`
+doesn't already. Rate-limited (5/min/IP, `lib/rate-limit.ts`) since it's
+unauthenticated and does real DB work per request. This is intentionally
+temporary — meant to be removed in a follow-up commit once a live check
+against the deployment confirms everything works, not left as permanent
+infrastructure.
+
 ## Merge PR #6, fix same-day date range, clean up build env vars (2026-09-22)
 
 ### Same-day date range showed "Oct 24–24"
