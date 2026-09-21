@@ -1,5 +1,36 @@
 # Decisions & assumptions
 
+## Recover from a failed migration on Vercel without a terminal (2026-09-21)
+First real Vercel deploy against the (new, empty) Supabase database hit
+`prisma migrate deploy` failing with **P3009**: an earlier, interrupted
+build had left migration `20260920221259_init` recorded in Postgres's
+`_prisma_migrations` table as failed, and every subsequent `migrate
+deploy` refuses to proceed past a failed migration rather than risk
+re-applying something partially done. Since the database is new and
+empty, there's nothing to actually roll back — the fix is just telling
+Prisma to forget the failed attempt so `migrate deploy` retries it fresh.
+Normally that's `prisma migrate resolve --rolled-back <name>` run once by
+hand, but the user has no terminal access to this Vercel project, so it
+needed to be buildable from an env var instead:
+
+`scripts/vercel-build.sh` now runs
+`prisma migrate resolve --rolled-back "$PRISMA_RESOLVE_ROLLED_BACK"`
+before `migrate deploy`, only when that env var is set, with `|| echo
+...` (not bare, so `set -e` doesn't treat it as fatal) around it so a
+"nothing to resolve" result — the normal case once the one bad migration
+is cleared — never fails the build. `migrate deploy` itself runs
+undecorated (no output capture/piping) so a real failure's full Prisma
+error text reaches the Vercel build log verbatim. Verified all three
+paths (no env var set / resolve has nothing to do / deploy genuinely
+fails) with a stubbed `prisma` binary before pushing, since this sandbox
+still has no real Supabase connection to test against directly.
+
+Value to set in Vercel: `PRISMA_RESOLVE_ROLLED_BACK=20260920221259_init`
+(the exact migration name from the P3009 error). Safe to leave set
+permanently — once resolved, later runs just hit the harmless "nothing to
+resolve" branch — but fine to remove again once a build succeeds, since
+its only job is clearing this one incident.
+
 ## Backend build: API routes, DB wiring, Vercel migrate/seed (2026-09-21)
 
 ### Step 1 (DB) blocked, then descoped for this pass
