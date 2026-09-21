@@ -46,6 +46,7 @@ npm run dev
 | `/passport/[token]` | Mobile passport |
 | `/agents` | For Agents & Hosts |
 | `/s/[scanToken]` | QR check-in — stamps the attendee's passport for that stop |
+| `/admin` | Admin: events, stops, RSVPs (password-protected, see **Admin** below) |
 
 ## API routes
 
@@ -88,6 +89,23 @@ a couple of one-time setup steps:
    `SEED_ON_BUILD=true`, then `next build` — see `scripts/vercel-build.sh`.
    Schema migrations then ship automatically on every deploy; you should
    not need to run `prisma migrate deploy` by hand against production.
+
+## Admin
+
+`/admin` lets you create/edit events, stops, and view RSVPs without
+touching code. It's gated by a single shared password (no user accounts) —
+a signed session cookie, checked in `middleware.ts`, not a full auth
+library. Setup:
+
+1. Generate a password hash: `npm run admin:hash-password` (prompts for a
+   password, input hidden — or pipe one in: `echo -n 'my-password' | npm
+   run admin:hash-password`). Copy the printed `ADMIN_PASSWORD_HASH` line.
+2. Set two env vars (locally in `.env`, and on Vercel under **Project
+   Settings → Environment Variables**):
+   - `ADMIN_PASSWORD_HASH` — from step 1.
+   - `SESSION_SECRET` — any long random string, e.g. `openssl rand -hex 32`.
+     Signs the session cookie; changing it logs everyone out.
+3. Log in at `/admin/login`.
 
 ## Notes
 
