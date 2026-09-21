@@ -45,7 +45,7 @@ npm run dev
 | `/events/[slug]` | Event detail + RSVP |
 | `/passport/[token]` | Mobile passport |
 | `/agents` | For Agents & Hosts |
-| `/s/[scanToken]` | QR scan landing (arrives with the scan flow, Phase 3/4) |
+| `/s/[scanToken]` | QR check-in — stamps the attendee's passport for that stop |
 
 ## API routes
 
@@ -55,6 +55,7 @@ npm run dev
 | `GET /api/events/[slug]` | Event detail |
 | `POST /api/rsvp` | RSVP: email required, name optional, unchecked-by-default agent-contact consent |
 | `GET /api/passport/[token]` | Passport state for a pass token |
+| `POST /api/passport/lookup` | Find a pass token by event + email (QR check-in fallback, rate-limited) |
 | `POST /api/stamps/scan` | Stamp a stop (idempotent, rate-limited) |
 | `POST /api/agent-inquiries` | `/agents` "Request Info" form submissions |
 

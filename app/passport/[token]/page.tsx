@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { computePassProgress, getPassByToken } from "@/lib/passport-db";
 import { STOP_KINDS } from "@/lib/event-types";
+import { PersistPassToken } from "@/components/persist-pass-token";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export default async function PassportPage({
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-linen pb-24 text-charcoal">
+      <PersistPassToken eventSlug={pass.event.slug} token={token} />
       <div className="mb-2 px-4 pt-6 text-center">
         <Link href="/" className="text-[11px] font-semibold text-sage no-underline">
           ← Haven Rush
