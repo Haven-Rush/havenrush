@@ -1,5 +1,56 @@
 # Decisions & assumptions
 
+## Merge PR #6, fix same-day date range, clean up build env vars (2026-09-22)
+
+### Same-day date range showed "Oct 24–24"
+`formatEventDateLabel` (`lib/events-db.ts`) decided same-day vs. range with
+`event.startsAt.toDateString() === event.endsAt.toDateString()`, which
+compares calendar dates in the server's local zone (UTC on Vercel), while
+every formatted string below it uses `America/Chicago`. The seeded "South
+Congress Tasting Hunt" runs 3–7pm CDT on Oct 24, which is 20:00–00:00 UTC —
+same Central day, different UTC day — so `sameDay` came back `false` and
+both ends of the range formatted to the same Chicago-zone day number.
+Fixed by comparing zoned date keys (`Intl.DateTimeFormat("en-CA", {
+timeZone, ... })`, which formats to `YYYY-MM-DD`) instead of the
+UTC-vs.-local-ambiguous `toDateString()`. Single shared function, so the
+fix covers the events feed, the event detail API response, and the admin
+event list in one place. Verified against the actual UTC-crossing seed
+event and against a genuine multi-day event (`Nov 7–8`, unaffected).
+
+### `SEED_ON_BUILD` / `PRISMA_RESOLVE_ROLLED_BACK` no longer need to be set
+Both were one-time setup/recovery knobs (initial seed, and clearing a
+migration stuck as "failed" after a killed build) — the schema and seed
+are stable now, so leaving them set just adds an unnecessary seed run (or
+a no-op resolve attempt) to every deploy. Confirmed `scripts/vercel-build.sh`
+reads both behind a guarded `if` (`[ -n "$PRISMA_RESOLVE_ROLLED_BACK" ]`,
+`[ "$SEED_ON_BUILD" = "true" ]`), so removing them from Vercel's
+environment variables changes nothing about how the script runs — it
+just skips those blocks, same as it always did once they weren't set to
+a truthy value. README's Vercel section rewritten to describe them as
+one-time flags rather than something to leave configured permanently.
+
+### PR #6 merge conflict was doc-only
+PR #6 (admin tools) branched from the same commit PR #7 (QR check-in) did,
+and both got merged into `main` in the same session — PR #6's merge
+therefore conflicted with `main`, but only in `README.md` and
+`DECISIONS.md` (each PR appended to both). No application code touched
+the same file on both sides. Resolved by merging `origin/main` into
+`feature/admin-tools` locally, combining both sides' additions (README:
+kept both new route-table rows; DECISIONS: kept both new entries, in
+sequence), rebuilding/relinting clean, then pushing and merging as normal
+— no history rewritten, no `--force`.
+
+### Production self-verification blocked by sandbox egress policy
+Asked to check `havenrush.com` directly (admin login, `/s/[scanToken]`,
+`/events`, `/api/events`) against the real deployment now that
+`DATABASE_URL`/`DIRECT_URL` work in Vercel's build. This session's
+network egress proxy returned a 403 on the CONNECT to `havenrush.com`
+(organization policy, confirmed via `/__agentproxy/status` —
+`recentRelayFailures` names the host, `connect_rejected`), not a
+transient failure, so per the proxy's own guidance this wasn't retried
+or routed around. Reported to the user as a blocker rather than skipped
+silently or faked.
+
 ## Admin tools, steps 2-4: event form, stops, RSVPs (2026-09-22)
 
 ### Server Actions, not a parallel `/api/admin/*` REST layer
