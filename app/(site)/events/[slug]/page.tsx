@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EVENT_TYPES } from "@/lib/event-types";
 import {
+  formatEventDateLabel,
   getEventDetailBySlug,
   homesCount,
   hostingBrokerages,
@@ -36,9 +37,7 @@ export default async function EventDetailPage({
         {EVENT_TYPES[event.type].label}
       </div>
       <h1 className="mb-2 font-serif text-[clamp(26px,3.8vw,36px)] font-bold">{event.title}</h1>
-      <p className="mb-2 text-sm text-charcoal/55">
-        {event.neighborhood} · {event.city}
-      </p>
+      <p className="mb-2 text-sm text-charcoal/55">{formatEventDateLabel(event)}</p>
       {brokerages.length > 0 && (
         <p className="mb-7 text-[13px] text-charcoal/60">
           Hosted with{" "}
