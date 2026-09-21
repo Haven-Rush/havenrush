@@ -1,5 +1,39 @@
 # Decisions & assumptions
 
+## Strip a dotenv log line that had leaked into migration.sql (2026-09-21)
+The P3009 failure in the previous entry turned out to have a second layer:
+once `PRISMA_RESOLVE_ROLLED_BACK` cleared the stuck failed-migration
+record, Vercel's retry of `prisma migrate deploy` failed again, this time
+with a Postgres syntax error at `◇ injected env (0) from .env` on line 1
+of `20260920221259_init/migration.sql`. That line (plus a
+`Loaded Prisma config from prisma.config.ts.` line and a blank line right
+after it) isn't SQL at all — it's `dotenv`'s own console log line from
+`prisma.config.ts`'s `import "dotenv/config"`, which must have been
+captured into the file back when this migration was originally generated
+with its output redirected into `migration.sql` (e.g.
+`prisma migrate dev > migration.sql` or similar, rather than letting
+Prisma write the file itself). Checked all 4 migration files
+(`grep` for that line and other dotenv/Prisma banner text anywhere in
+them, not just line 1) — only `20260920221259_init/migration.sql` had it,
+right at the top.
+
+None of the 4 migrations has ever successfully applied to any database
+(this is the project's first real deploy attempt, still failing before
+this fix), so editing a shipped migration file — normally off-limits once
+applied — was safe here: removed the 3 junk lines, leaving line 1 as
+`-- CreateSchema`, the file's original first real line.
+
+To stop it recurring, `prisma.config.ts` now calls `dotenv`'s `config()`
+directly with `{ quiet: true }` instead of the side-effect
+`import "dotenv/config"`, which suppresses the "injected env" log line at
+the source — verified with `npx prisma generate`, which no longer prints
+it. This only prevents the log line from being generated in the first
+place; it doesn't change how migrations are written (that's on whoever
+runs `prisma migrate dev` next to not redirect its console output into
+the SQL file). Grepped the whole repo for other `dotenv` entry points —
+`prisma.config.ts` is the only one, so there's nowhere else this could
+leak from.
+
 ## Recover from a failed migration on Vercel without a terminal (2026-09-21)
 First real Vercel deploy against the (new, empty) Supabase database hit
 `prisma migrate deploy` failing with **P3009**: an earlier, interrupted
