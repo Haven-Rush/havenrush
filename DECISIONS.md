@@ -1,5 +1,126 @@
 # Decisions & assumptions
 
+## Admin tools, steps 2-4: event form, stops, RSVPs (2026-09-22)
+
+### Server Actions, not a parallel `/api/admin/*` REST layer
+The brief asked for pages, not endpoints, and the public site's Server
+Components already query Prisma directly (`lib/events-db.ts`,
+`lib/passport-db.ts`) rather than calling this app's own `/api/*` routes
+internally — the same reasoning applies here. `createEvent`/`updateEvent`
+(`app/admin/(authenticated)/events/actions.ts`) and
+`createStop`/`updateStop`/`deleteStop`/`moveStop`
+(`.../events/[id]/stops/actions.ts`) are plain `"use server"` functions,
+called directly from `<form action={...}>` or, for delete/reorder, from a
+button's `onClick` — both are standard supported patterns, no extra
+fetch/JSON round trip through this app's own server.
+
+### Routes live inside `(authenticated)`, not sibling to it
+Step 1 put the shell chrome in `app/admin/(authenticated)/layout.tsx` — a
+route group only applies its layout to routes nested inside it, so
+`/admin/events/new`, `.../[id]/edit`, `.../[id]/stops`, and `.../[id]/rsvps`
+all had to live under `app/admin/(authenticated)/events/...` (not a
+sibling `app/admin/events/...`) to inherit the header/logout shell. The
+route group doesn't add a URL segment, so the URLs come out exactly as
+specified regardless.
+
+### Event form: `useActionState`, not a redirect+query-param error
+Step 1's login form redirects back with `?error=1` on failure, which is
+fine for a single password field with nothing to lose. The event form has
+eight fields plus a repeatable reward-tiers list — losing all of that on
+a full-page redirect would be a bad admin experience, so it uses React
+19's `useActionState` instead: the action's return value becomes
+component state without a navigation, so entered values stay put and an
+inline error/success message renders next to the button. `createEvent`
+redirects to the new event's edit page on success (`redirect()` inside a
+`useActionState`-bound action is supported — the throw that drives the
+navigation just means the state update never resolves, which is fine,
+the component's about to unmount); `updateEvent` doesn't redirect, it
+returns `{ success: true }` so "Saved." shows without leaving the page,
+since from here you'd usually go on to Stops or RSVPs rather than back to
+the list.
+
+### Slug: client-side live preview, server-side is what actually decides
+The title field updates the slug field live via a simple `slugify()`
+(`lib/slugify.ts`) as long as the admin hasn't typed into the slug field
+directly (tracked with a `slugTouched` flag — the same "stop
+auto-generating once they've taken the wheel" pattern as any title→slug
+form). That's a UX convenience only; `createEvent`/`updateEvent` re-
+validate the submitted slug's format server-side (`SLUG_RE`) and check
+uniqueness with a real query (excluding the event's own row on update)
+regardless of what the client showed, since the client's opinion of
+"free" could be stale.
+
+### `datetime-local` inputs: round-tripped through America/Chicago, not the browser's/server's zone
+An `<input type="datetime-local">` has no timezone of its own — it's just
+"YYYY-MM-DDTHH:mm" as typed. Naively doing `new Date(value)` treats it as
+the *server's* local time (UTC on Vercel), which would silently shift
+every saved event by 5-6 hours from what the admin actually typed.
+`lib/admin-datetime.ts` adds `toDateTimeLocalValue`/
+`fromDateTimeLocalValue`, which explicitly target `America/Chicago` (the
+same zone `lib/events-db.ts` already formats display dates in) via a
+round-trip through `Intl.DateTimeFormat`: format a guessed UTC instant in
+that zone, compare it to what was intended, and shift by the gap — this
+gets the correct offset for that specific date (so it's correct across
+the DST boundary) without a timezone library. Verified directly against
+both a CDT (`-05:00`, October) and a CST (`-06:00`, December) seed
+timestamp before wiring it into the form.
+
+### Stop reordering: swap `order` with a neighbor, no drag-and-drop
+"Reorder" is two buttons (▲/▼) per row that swap a stop's `order` with
+the adjacent stop's, in a transaction (`moveStop`). No drag-and-drop
+library, no fractional/sparse ordering scheme — simple, and the schema's
+`Stop.order` is a plain `Int` with no gaps to manage.
+
+### Stop `scanToken` is generated, never shown as an editable field
+A new stop's `scanToken` is set server-side with `randomUUID()` (the same
+approach `POST /api/rsvp` already uses for `Pass.token` — product rule 6:
+unguessable, non-sequential). The admin form can't set or edit it; it's
+only ever shown read-only in the stops table, since it's the physical-
+QR-scan credential the whole passport mechanic depends on (see the
+"scanToken is never returned by a JSON API" entry below) — letting an
+admin retype it would risk them choosing something guessable.
+
+### RSVP list rule-check: consent gates leads leaving the system, not the owner viewing their own data
+CLAUDE.md's consent rule (product rule 1) and the "must not expose
+anything I wouldn't already have permission to see" instruction are about
+data leaving Haven Rush's system to a third party (an agent). The
+business owner viewing their own attendees' email/intent/timeline/consent
+/stamp count in their own admin panel isn't a third-party disclosure —
+it's the data controller looking at data they already control, and
+that's the explicit point of this page ("the sponsor-facing number I'll
+want to show"). No masking applied.
+
+### A real bug caught building this: same-specificity Tailwind width classes don't compose by string order
+Built the reward-tier row as `` `${inputClass} w-24` `` (a fixed-width
+"stops" field) and `` `${inputClass} flex-1` `` (a fill-width "reward"
+field), where the shared `inputClass` already included `w-full`. Screen-
+shotting the form showed the "reward" input collapsed to ~30px instead of
+filling the row. Traced it with computed styles: `flex-grow`/`flex-basis`
+were correctly `1`/`0%`, but the *other* field (`w-24`) was rendering at
+~556px, meaning its `w-full` (from `inputClass`) was winning over `w-24`
+appended after it in the className string. Same-specificity Tailwind
+utility classes resolve by their order in the *generated stylesheet*, not
+by their order in a component's className string — appending a narrower
+width class after a `w-full` base doesn't reliably override it. Fixed by
+splitting the shared style into a width-less `fieldBaseClass` and adding
+each field's own width explicitly (`w-full`, `w-24`, or `flex-1`), so no
+two width utilities ever compete on the same element. Re-verified with
+computed `getBoundingClientRect()` widths after the fix (96px / fills
+remaining space, as intended) and a screenshot. This pattern
+(`${inputClass} <width-utility>`) doesn't recur elsewhere in these admin
+components — grepped for it.
+
+### What's still unverified: everything that needs a real event row
+`/admin` (event list), `/admin/events/[id]/edit|stops|rsvps` all
+require a real `Event.id` from Postgres to render past `notFound()` —
+this sandbox still has no `DATABASE_URL`/`DIRECT_URL`. Verified instead,
+against a locally generated test password, everything that *doesn't*
+need a DB row: the full login round trip (from step 1, still holds), and
+`/admin/events/new`'s form itself — slug auto-generation, the
+title→slug "touched" cutover, adding/filling reward-tier rows, and (after
+the fix above) their layout — rendered and interacted with via Playwright,
+screenshotted before and after the width fix.
+
 ## Admin tools, step 1: auth + shell + event list (2026-09-22)
 
 ### Password auth: scrypt + a signed cookie, no library
