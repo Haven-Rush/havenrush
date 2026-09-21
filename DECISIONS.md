@@ -1,5 +1,90 @@
 # Decisions & assumptions
 
+## QR check-in, steps 1-2: pass persistence + /s/[scanToken] (2026-09-22)
+
+### localStorage, keyed by event id — not a single global slot, not a cookie
+`lib/pass-storage.ts` stores `{ [eventId]: passToken }`, not one bare
+token. An attendee can hold passes for more than one Haven Rush event (a
+Home Hunt this month, an Open House Weekend next month); a single global
+"current pass" slot would let RSVP'ing to the second silently overwrite
+the first, so returning to a stop from the first event would then either
+fail to find a pass or — worse — try to stamp the wrong one. Keying by
+event id keeps both valid at once and is what makes the "wrong event"
+state (below) reachable through the normal flow rather than only via the
+step-3 email path: it fires when the device holds a pass, just not one
+for *this* stop's event.
+
+Chose localStorage over a cookie because nothing here needs the token
+sent automatically on every request to this origin (unlike the admin
+session cookie) — it's read once, client-side, and sent explicitly in
+the `POST /api/stamps/scan` body. `getStoredPassToken`/`storePassToken`
+no-op under SSR (`typeof window === "undefined"`) and swallow
+`localStorage` errors (private browsing, quota) — persistence here is a
+convenience the flow already has a fallback for (step 3's email lookup),
+not something to let crash the page.
+
+### Persisted only on the passport page, per instruction — not also at RSVP
+The brief scoped step 1 to "on the passport page," and that's what's
+built (`components/persist-pass-token.tsx`, a no-op-render client
+component mounted in `app/passport/[token]/page.tsx`). Worth flagging
+explicitly since a more defensive design would *also* persist right when
+`POST /api/rsvp` returns a token in `components/rsvp-flow.tsx`, before
+the attendee necessarily clicks through to the passport page at all —
+if they close the confirmation screen without visiting `/passport/...`,
+this device won't have their token until they do. Didn't add that here
+since it's out of the scope given; flagging in case the answer is
+"actually, yes, both."
+
+### `/s/[scanToken]` never receives the scanToken as a data prop
+The server page (`app/s/[scanToken]/page.tsx`) reads `scanToken` from
+`params` to query the stop, but the client component it renders
+(`components/scan-checkin.tsx`) is never handed that value as a prop —
+it reads it straight back out of the URL via `useParams()`. Both ends
+independently read the same URL the attendee is already on; the value
+never gets serialized into page data or a JSON response on its way
+between them. This satisfies CLAUDE.md's "never expose a stop's
+scanToken in any JSON API response... the page itself is the only place
+it's read, server-side, from the URL param" — read server-side to
+*validate*, and separately by the client straight from the address bar
+to *submit*, but never round-tripped through my own code as a value in
+between.
+
+### "Live" = strictly between `startsAt` and `endsAt`, no grace window
+`lib/scan-db.ts#isEventLive` is a plain `now >= startsAt && now <=
+endsAt`. No early-open or late-close grace period — not asked for, and
+adding one would be a guess at a number nobody specified. Easy to add a
+window later if hosts want to let people check in 30 minutes early.
+
+### Total-stops count comes from the page's own query, not from `POST /api/stamps/scan`'s response
+The scan API returns `stampedCount` but not a total, and the success
+screen needs to show "4 of 10." Rather than change the already-shipped,
+tested scan endpoint's response shape, `app/s/[scanToken]/page.tsx`
+queries `countStopsForEvent` itself (one extra `prisma.stop.count`,
+already knows the event id from resolving the stop) and passes it down
+as a prop. Keeps the scan API's contract exactly as it was.
+
+### The "no local pass" state is an honest dead end, not a fake form
+Step 3 (email fallback) is explicitly the next piece, not this one. When
+`getStoredPassToken` comes up empty, `ScanCheckIn` shows a plain message
+("we don't see a pass for this event on this device...") rather than a
+form that doesn't do anything yet, or worse, a form that silently no-ops
+on submit. It also covers the case where the API returns 404 on the
+pass (a stored token pointing at a pass that's since been deleted) —
+same state, since from the attendee's side it's the same problem:
+"nothing usable is stored here."
+
+### Verification: build/lint clean; couldn't render any state without a DB
+Every branch of `/s/[scanToken]` — including the "invalid code" error —
+runs at least one Prisma query before it can decide what to show, so
+none of it is reachable without `DATABASE_URL`/`DIRECT_URL`, unlike
+earlier admin-tools pieces where at least one page rendered DB-free.
+Verified what's checkable without one: `npm run build` and `npm run
+lint` clean, and read back through the scan API's existing route
+handler line by line to make sure `ScanCheckIn`'s response handling
+(the `"doesn't belong"` substring match for wrong-event, the 404/`
+alreadyStamped`/`stampedCount` shape) actually matches what it returns
+today rather than an assumption about it.
+
 ## Strip a dotenv log line that had leaked into migration.sql (2026-09-21)
 The P3009 failure in the previous entry turned out to have a second layer:
 once `PRISMA_RESOLVE_ROLLED_BACK` cleared the stuck failed-migration
