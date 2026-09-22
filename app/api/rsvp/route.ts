@@ -5,7 +5,7 @@ import { CONSENT_TEXT } from "@/lib/site-config";
 import type { Intent, Timeline } from "@prisma/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const INTENTS: Intent[] = ["BUYING", "RENTING"];
+const INTENTS: Intent[] = ["EXPLORING", "BUYING", "RENTING"];
 const TIMELINES: Timeline[] = ["JUST_LOOKING", "MOVING_SOON"];
 
 type RsvpBody = {

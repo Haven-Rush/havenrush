@@ -1,5 +1,73 @@
 # Decisions & assumptions
 
+## business-plan.md replaced; copy audit for real-estate/transaction gating (2026-09-22)
+`docs/business-plan.md` was already replaced with the new place-discovery
+version in a prior commit on this branch (`092e9a4`) — confirmed the
+user-provided text matches byte-for-byte, so no further edit was needed
+there. Ran a dedicated audit (a background `Explore` agent read CLAUDE.md,
+the new business plan, and every user-facing surface listed in CLAUDE.md's
+route table plus admin) for copy that still assumes every event is real
+estate or requires a transaction to participate. Fixed the substantive
+findings; the four `EventType` enum values/labels, Tailwind design tokens,
+and "Hunt" vocabulary were left untouched per instruction.
+
+### Fixed
+- **RSVP forced a Buying/Renting choice on every attendee, for every event
+  category.** Added a third `Intent` value, `EXPLORING` ("Just exploring"),
+  now the default selection and first option — `prisma/schema.prisma`,
+  migration `20260922010000_broaden_intent_optional_brokerage`,
+  `components/rsvp-flow.tsx`, `app/api/rsvp/route.ts`, and the admin RSVPs
+  table (`app/admin/(authenticated)/events/[id]/rsvps/page.tsx`, column
+  header "Intent" -> "Interest" since it's no longer real-estate-only).
+- **`/agents` inquiry form required a "brokerage" to submit**, contradicting
+  its own "Coworking, Hotels & Venues" card's promise of "no listing
+  required." Made `AgentInquiry.brokerage` nullable (same migration) and
+  the field optional client- and server-side
+  (`components/agent-inquiry-form.tsx`, `app/api/agent-inquiries/route.ts`);
+  placeholder now reads "Company or brokerage (optional)."
+- **Consent copy said "hosting agent."** `CONSENT_TEXT` (`lib/site-config.ts`)
+  -> "I'm OK with the host contacting me about this event." — matches
+  CLAUDE.md's own vocabulary (host covers agent/property manager/leasing
+  office/coworking operator/venue) and is what's stored per-pass, so this
+  is the literal text a non-agent host's attendees now see and consent to.
+- **Event detail stat was labeled "Homes"** for every event's featured-stop
+  count, including a coworking/hotel/Home-Fair event. Relabeled to "Places"
+  (`app/(site)/events/[slug]/page.tsx`); the underlying `homesCount()`/
+  `LISTING` data plumbing is unchanged, this is display-only.
+- **`STOP_KINDS.LISTING` display label was "Home"**, shown on the passport
+  page and admin stops table for every stop of that kind regardless of
+  category. Relabeled to "Place" (`lib/event-types.ts`); the `LISTING` enum
+  name itself is untouched (it's a data concept, not shown verbatim).
+- **Root `<meta>` description still said "Meet the homes"** (`app/layout.tsx`),
+  out of sync with the homepage's own already-updated "Meet the places."
+  hero line from an earlier copy pass — fixed to match.
+- **RESPA/fair-market-value disclaimer read as blanket page copy** on
+  `/agents`, which lists a "Coworking, Hotels & Venues" package alongside
+  the four real-estate-anchor types. Prefixed the disclaimer text itself
+  (`FAIR_MARKET_VALUE_DISCLAIMER`, `lib/site-config.ts`) with "For
+  real-estate-category events and packages," rather than adding page
+  layout — keeps CLAUDE.md's "keep disclaimer copy in one editable file"
+  rule intact and doesn't touch `/agents`' rendering.
+
+### Flagged, not fixed here: "Hosted with" attribution has no non-brokerage fallback
+`hostingBrokerages()` (`lib/events-db.ts`) only collects names off
+`LISTING`-kind stops that have an `Agent` attached, so an event hosted
+entirely by a coworking operator or venue (no such stops) gets no "Hosted
+with" line at all — CLAUDE.md product rule 3 wants the hosting party named
+regardless of type. Fixing this properly needs a generic host concept on
+`Event`/`Stop` beyond the current `Agent`-only model, which is schema/data
+scope well past a copy audit; not done silently here.
+
+### Not changed: `EventType` taglines' use of "property"
+`lib/event-types.ts`'s House Party and Home Hunt taglines ("One property...",
+"...a handful of properties...") use "property" generically, matching
+CLAUDE.md's own wording for those two formats and an earlier copy pass's
+explicit swap from "home(s)" to "property/properties" for this exact
+reason. Left as-is — not one of the audit's findings, and CLAUDE.md itself
+treats "property" as covering non-residential places (e.g. "a small
+commercial space being marketed").
+
+
 ## Final logo assets: crest, favicon, apple-touch-icon (2026-09-22)
 Saved the three provided brand assets under `public/brand/`
 (`hr_full_crest_final.png`, `gold_bow_icon_final.png`,

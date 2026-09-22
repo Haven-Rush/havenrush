@@ -61,7 +61,7 @@ export default async function EventDetailPage({
       <p className="mb-7 text-[15px] leading-relaxed text-charcoal/75">{event.description}</p>
 
       <div className="mb-7 grid grid-cols-3 gap-4 border-y border-charcoal/10 py-[22px] text-center">
-        <Stat label="Homes" value={String(homesCount(event))} />
+        <Stat label="Places" value={String(homesCount(event))} />
         <Stat label="Food & Coffee Stops" value={String(tastingStopsCount(event))} />
         <Stat label="Reward" value={topReward(event) ?? "—"} accent />
       </div>

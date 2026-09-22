@@ -39,7 +39,7 @@ export const EVENT_TYPE_ORDER: EventType[] = [
 ];
 
 export const STOP_KINDS = {
-  LISTING: { label: "Home" },
+  LISTING: { label: "Place" },
   COFFEE: { label: "Coffee stop" },
   FOOD: { label: "Food stop" },
   MUSIC: { label: "Live music" },
