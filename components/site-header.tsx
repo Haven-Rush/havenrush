@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,9 +16,14 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-charcoal/8 bg-linen/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5 px-6 py-4 sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-sage font-serif text-[15px] font-bold text-honey">
-            HR
-          </span>
+          <Image
+            src="/brand/hr_full_crest_final.png"
+            alt=""
+            width={522}
+            height={485}
+            className="h-10 w-auto"
+            priority
+          />
           <span className="font-serif text-xl font-bold text-sage">Haven Rush</span>
         </Link>
 

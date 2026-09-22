@@ -1,5 +1,71 @@
 # Decisions & assumptions
 
+## Final logo assets: crest, favicon, apple-touch-icon (2026-09-22)
+Saved the three provided brand assets under `public/brand/`
+(`hr_full_crest_final.png`, `gold_bow_icon_final.png`,
+`hr_monogram_final.png`) and wired the crest and bow into the app.
+
+### Trimmed transparent padding before saving
+All three source images had a lot of surrounding transparent space (the
+bow source, notably, was a 1536×1024 canvas around an ~1215×848 subject).
+Ran each through `sharp().trim()` before saving so the assets aren't
+mostly empty space -- matters most for the bow, since it's the source for
+small square icons and needs to fill the frame.
+
+### Header/footer: `next/image`, decorative `alt=""`
+Replaced the header's "HR" text badge and the footer's plain text
+wordmark with the crest image, both via `next/image` (first use of it in
+this codebase -- local `/public` asset, no remote-pattern config needed).
+Both placements sit directly next to a visible "Haven Rush" text label in
+the same link/line, so the image's `alt` is empty rather than "Haven
+Rush" -- otherwise a screen reader announces the name twice. Checked the
+crest's actual pixel data (not just eyeballing the preview) before
+placing it on the footer's dark charcoal background: ~70% of the image is
+alpha=0, and the "white" shield interior visible in previews is
+transparency showing an image-viewer background, not an opaque fill --
+confirmed the crest renders correctly on both the light header and dark
+footer without an ugly white box.
+
+### favicon.ico: fed `png-to-ico`'s CLI a single 256×256 master, not three pre-sized PNGs
+First attempt generated 16/32/48px PNGs myself and passed all three to
+`npx png-to-ico`. Result parsed back as a 4-entry ICO (16/32/48/256) but
+was visibly wrong -- traced it to the CLI's actual implementation
+(`bin/cli.js` only ever reads `argv._[0]`, silently ignoring every
+argument after the first), so it treated my 16×16 file as the sole input,
+upscaled it to 256×256, then downsampled *that* blurry upscale back down
+for the 48/32 entries -- every embedded size ended up derived from a
+16px source. Fixed by generating one clean 256×256 padded PNG (via
+`sharp`, transparent `contain` fit) and passing only that single file,
+which routes through the library's own (correct) resize-down-from-256
+logic for all four embedded sizes. Verified by regenerating 16/32/48px
+previews independently from the same clean source and inspecting them
+directly -- the bow reads clearly even at 32×32.
+
+`png-to-ico` was run via `npx` as a one-off, not added to
+`package.json`/`package-lock.json` -- this is a single build-time asset
+generation, not a runtime dependency.
+
+### apple-icon.png via the App Router file convention
+Added `app/apple-icon.png` (180×180, from the same clean bow source) --
+Next.js's App Router auto-detects this filename and emits the
+`<link rel="apple-touch-icon">` itself; confirmed in the build output
+(`○ /apple-icon.png` listed as its own static route) and by fetching it
+directly (200, `image/png`).
+
+### Verification: real screenshots, but not a real browser tab
+Screenshotted the header and footer with a real (headless) Chromium
+against a running dev server -- no database needed since the home page
+doesn't query Prisma. For the favicon/tab-icon half of the ask: Playwright
+screenshots only ever capture page content, never browser chrome (tab
+bar, address bar) in either headless or headed mode, and this sandbox has
+no screen-capture utility (`scrot`/`import`/`gnome-screenshot` all
+absent) to grab a real window with `Xvfb`, which is available. So instead
+of a literal tab-bar screenshot: confirmed `/favicon.ico` and
+`/apple-icon.png` both serve with correct content-types from a running
+server, and rendered standalone PNG previews at actual favicon pixel
+sizes (16/32/48) from the same source used inside the `.ico`, to verify
+legibility directly rather than assume it.
+
 ## Site copy pass: home hero, event type cards, /agents (2026-09-22)
 Step 2 of the broadened-positioning work, now explicitly requested.
 
