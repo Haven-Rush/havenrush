@@ -1,5 +1,44 @@
 # Decisions & assumptions
 
+## Broaden scope again: places, not just real estate (2026-09-22)
+CLAUDE.md replaced with the user-provided text (this time it arrived in
+full — the previous two attempts referenced an "attached" file that
+never came through, see the entries below). Widens Haven Rush from "real
+estate spaces" to "places" generally (homes, coworking, vacation stays,
+hotels, commercial/community spaces, local destinations), with real
+estate as the anchor category and first market rather than the whole
+platform. Supersedes the "real estate spaces" framing from the entry two
+below — that framing is now itself one step behind, same as its own
+predecessor.
+
+Scope of what actually changed in code this round, deliberately kept
+narrow since this message (unlike the earlier "Required: 1/2/3/4..."
+one) was the corrected doc text alone, not a new set of build
+instructions:
+- CLAUDE.md swapped in verbatim (preserving the auto-injected Next.js
+  agent-rules block).
+- `ATTRIBUTION_STATEMENT` (`lib/site-config.ts`) updated to the new
+  exact wording CLAUDE.md's product rule #3 quotes verbatim ("Licensed
+  real estate services, where applicable, are provided by independent
+  licensed partners") — a concrete, unambiguous required-copy sync, not
+  a judgment call. Confirmed it's the single source both the footer and
+  `/agents` read from (they share `(site)/layout.tsx`), so one edit
+  covers both, per CLAUDE.md's "keep disclaimer copy in one editable
+  file" rule.
+- `EventPurpose` enum left as `SALE | RENTAL | LEASE | SHOWCASE` — the
+  new doc's product rule #1 lists "stay, visit, tour" as illustrative
+  examples of what a non-real-estate event might record, not a mandate
+  to add those values now; no event type or feature consuming them
+  exists yet, so adding them would be speculative schema surface ahead
+  of an actual need.
+
+The broader home-page/event-card/`/agents` copy pass (the original
+"step 2," pending review since step 1) is still open and unstarted —
+this message didn't re-trigger it, so it's not assumed. Design tokens
+again untouched: the new CLAUDE.md explicitly keeps the tropical/
+place-discovery rebrand idea "on hold," consistent with the earlier
+instruction not to touch colors.
+
 ## Correction: Event.purpose is optional, not required (2026-09-22)
 Reversed course from the entry directly below, per explicit user
 correction: real estate is one category Haven Rush events can serve, not

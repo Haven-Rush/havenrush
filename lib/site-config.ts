@@ -6,7 +6,7 @@
 export const SITE_NAME = "Haven Rush";
 
 export const ATTRIBUTION_STATEMENT =
-  "Haven Rush is an event marketing platform. Real estate services are provided by independent licensed partner agents.";
+  "Haven Rush is an event marketing platform. Licensed real estate services, where applicable, are provided by independent licensed partners.";
 
 // TODO(legal): placeholder pending Utah review of advertising, referral,
 // compensation, and lead-gen rules (see docs/business-plan.md section 12).
