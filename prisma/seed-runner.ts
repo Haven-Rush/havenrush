@@ -44,6 +44,7 @@ export async function runSeed(prisma: PrismaClient): Promise<void> {
       update: {
         title: seedEvent.title,
         type: seedEvent.type,
+        purpose: seedEvent.purpose,
         neighborhood: seedEvent.neighborhood,
         city: seedEvent.city,
         startsAt: new Date(seedEvent.startsAt),
@@ -55,6 +56,7 @@ export async function runSeed(prisma: PrismaClient): Promise<void> {
         slug: seedEvent.slug,
         title: seedEvent.title,
         type: seedEvent.type,
+        purpose: seedEvent.purpose,
         neighborhood: seedEvent.neighborhood,
         city: seedEvent.city,
         startsAt: new Date(seedEvent.startsAt),

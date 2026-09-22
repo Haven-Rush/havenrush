@@ -47,3 +47,19 @@ export const STOP_KINDS = {
 } as const;
 
 export type StopKind = keyof typeof STOP_KINDS;
+
+/**
+ * The real estate purpose every event must state (CLAUDE.md product rule:
+ * "Every event must have a stated real estate purpose") -- what the event
+ * is marketing the property for, separate from EVENT_TYPES (its format).
+ */
+export const EVENT_PURPOSES = {
+  SALE: { label: "For Sale" },
+  RENTAL: { label: "For Rent" },
+  LEASE: { label: "Leasing" },
+  SHOWCASE: { label: "Showcase" },
+} as const;
+
+export type EventPurpose = keyof typeof EVENT_PURPOSES;
+
+export const EVENT_PURPOSE_ORDER: EventPurpose[] = ["SALE", "RENTAL", "LEASE", "SHOWCASE"];

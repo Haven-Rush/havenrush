@@ -1,5 +1,72 @@
 # Decisions & assumptions
 
+## Broaden positioning: Event.purpose (2026-09-22)
+CLAUDE.md rewritten to broaden Haven Rush from "home discovery" to any real
+estate space (sale, rental, lease, or showcase), with a stated real estate
+purpose as the eligibility bar for every event — this entry covers the
+schema/admin/API side of that (step 1); the site copy pass is a separate
+step, reviewed before starting.
+
+### `EventPurpose` is its own enum, not folded into `EventType`
+`EventType` is the event's *format* (House Party, Home Hunt, Open House
+Weekend, Home Fair); purpose is what it's marketing the property *for*
+(sale, rental, lease, showcase). They're independent axes — a Home Hunt can
+be sale-only homes or a mix of rentals and leases; a Home Fair showcases
+model homes rather than selling that specific unit. Collapsing them into
+one enum would force a combinatorial explosion of types or lose one axis.
+
+### No admin-form default — forces an explicit choice
+`EventForm`'s existing Type field silently defaults to the first option
+(`EVENT_TYPE_ORDER[0]`) when creating a new event. Purpose deliberately
+doesn't follow that pattern: CLAUDE.md's product rule frames this as
+something "checked at listing/host onboarding, not just implied" — so the
+select starts on a disabled blank option (`defaultValue=""`), and
+`required` blocks submission until the host actually picks one. Editing an
+existing event still pre-fills its current value as usual.
+
+### Migration backfills existing rows to SALE, but the app never does
+Adding a NOT NULL column needs every existing row to get a value before
+the constraint can be applied. All of this project's rows to date (seed
+data, and anything created via `/admin` before this ships) are home-for-
+sale listings, so `SALE` is an accurate one-time backfill — but it's a
+migration-only convenience, not an app default: the admin form has no
+default (see above), and every seed event now states its purpose
+explicitly (see below), so nothing in the running app relies on that
+backfill after it runs once.
+
+### Seed data purposes
+Four of the five seeded events (South Congress Tasting Hunt, The
+Elizabeth St Social, Austin Open House Weekend, Hyde Park Porch Hunt) are
+straightforward home-for-sale listings with a brokerage and agent attached
+— `SALE`. Sunday Market at Willow Creek (the Home Fair) is `SHOWCASE`
+instead: its stops are a builder's model homes, which market the
+community's available floor plans rather than being individually for sale
+themselves — that's what CLAUDE.md's showcase example describes. No seed
+event uses `RENTAL`/`LEASE` — nothing in the existing placeholder data
+(all Austin single-family homes with sale-side brokerages) fits either
+purpose, and fabricating a rental/lease example wasn't asked for.
+
+### Stop keeps just `kind`, no per-stop purpose
+CLAUDE.md's vocabulary section says a Home Hunt's stops "can mix for-sale
+homes, rentals, and leasing units in one hunt," which could read as needing
+per-stop purpose tracking. Decided against it: product rule #1 scopes the
+required field to "recorded on the Event record" specifically, singular,
+and describes it as *the* eligibility bar for the event, not per-property.
+The "mixing" language describes real-world variety a host might walk
+attendees through, not a schema requirement — nothing else in CLAUDE.md
+(the admin form spec, the event detail badge, the API shape) asks for a
+purpose per stop. Adding one now would be schema/UI scope beyond what was
+asked, for a distinction (this stop is a rental, that one's a sale) that
+has no consumer yet. If a future format genuinely needs it, `Stop` already
+has `kind` as the place a per-stop attribute like this would go.
+
+### `purpose` added to `/api/events` and `/api/events/[slug]`
+Not explicitly requested, but both routes already expose `type` (the same
+kind of event-level classification) — leaving the new required field out
+of the public API while the admin form, seed data, and event detail page
+all treat it as core would be an inconsistent contract. No new exposure
+risk: `purpose` is exactly as public as `type` already is.
+
 ## Remove `/api/health/self-check` after a confirmed-good production check (2026-09-22)
 Ran against the live deployment (by the user, since this sandbox still
 can't reach `havenrush.com`): `{"ok":true,"events":{"count":5},

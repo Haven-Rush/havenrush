@@ -3,9 +3,13 @@
 Read this first, then `/docs`. Where this file and a docs file disagree, this file wins.
 
 ## What we're building
-Haven Rush is an event marketing platform that turns home discovery into neighborhood social events (coffee, live music, local food, a stamp-collecting "passport"). Attendees get in free. Licensed agents, brokerages, and local sponsors pay for participation and permission-based leads.
+Haven Rush is an event marketing platform for **real estate spaces**, not just homes for sale. Any real estate owner or manager, brokerage, builder, landlord, or property manager, can host a Haven Rush event on their space **when the event serves a real estate purpose**: selling, renting, leasing, pre-leasing, or showcasing the property to prospective buyers/tenants/attendees who might engage with it commercially. It is not a venue-rental or generic-party platform; a real estate purpose is the eligibility bar for every event, checked at listing/host onboarding, not just implied by the format.
 
-**Haven Rush is not a brokerage.** It never represents buyers or sellers. Licensed partner agents do that.
+Examples of what qualifies: a for-sale single-family home (House Party, Home Hunt), a new apartment complex doing a leasing preview, a builder's model-home community (Home Fair), a commercial space marketed for lease, a short-term rental showcased to build bookings, a multi-property weekend spanning any mix of the above (Open House Weekend). What doesn't qualify: hosting at a property purely as a venue for an unrelated event with no connection to selling, renting, leasing, or showcasing it.
+
+Every event still runs on the same mechanic: coffee, live music, local food, a stamp-collecting "passport." Attendees get in free. Licensed agents, brokerages, property managers, and local sponsors pay for participation and permission-based leads.
+
+**Haven Rush is not a brokerage.** It never represents buyers, sellers, landlords, or tenants. Licensed partner agents and property managers do that.
 
 ## Files
 - `docs/mockup/Haven_Rush_App_v2_dc.html` — visual + interaction reference (5 views). **Not a codebase**: it is a design-tool export (`x-dc` format, inline styles, `useState`-style view switching) that also expects `support.js` and `ios-frame.jsx`. Rebuild it; don't try to run or extend it.
@@ -40,22 +44,25 @@ Next.js (App Router) + TypeScript + Tailwind CSS + Prisma. Real URLs replace the
 
 Four event types. The first three are the signature formats and the priority for the build, copy, and design. The fourth is a B2B product.
 
-1. **House Party** (`HOUSE_PARTY`): one home, local coffee, live music, neighbors. Smallest format.
-2. **Home Hunt** (`HOME_HUNT`): a self-guided walk through ~10-20 homes in an afternoon, with food stops, games, and a stamped passport. **Use "Hunt", not "Crawl".** "Crawl" reads as a pub crawl and drops the scavenger idea. The mockup says "Crawl"; change all UI copy and titles to "Hunt" (button "Find a Hunt"; "South Congress Tasting Hunt"; "Hyde Park Porch Hunt").
-3. **Open House Weekend** (`OPEN_HOUSE_WEEKEND`): a recurring multi-property scavenger hunt over a defined weekend, homes across a city or several neighborhoods, one digital passport, self-paced. Differs from Home Hunt in scale and pace: a Hunt is one walkable afternoon; a Weekend is spread out and repeats (monthly is the plan). Card copy: "A whole weekend, homes across town, one passport. Go at your own pace and collect stamps."
-4. **Home Fair** (`HOME_FAIR`): not a generic home show. It is a **builder-hosted market gathering in a new neighborhood**: a home builder opens its community like a market day, with model homes, local makers and food, live music, and lender/designer/mover booths, and attendees collect stamps by visiting booths and homes. Sold to builders and new-construction sponsors (vendor booths, sponsorships). Card copy: "A builder's new neighborhood, opened up like a market. Tour model homes, meet local makers, and collect stamps." Seed a placeholder such as "Sunday Market at Willow Creek · Nov 7-8 · New neighborhood" (rename later). Its host may be a builder rather than a brokerage: show the builder and any listing brokerage.
+1. **House Party** (`HOUSE_PARTY`): one property, local coffee, live music, neighbors. Smallest format. Works for a home for sale, a single rental unit, or a small commercial space being marketed.
+2. **Home Hunt** (`HOME_HUNT`): a self-guided walk through ~10-20 properties in an afternoon, with food stops, games, and a stamped passport. Properties can mix for-sale homes, rentals, and leasing units in one hunt. **Use "Hunt", not "Crawl".** "Crawl" reads as a pub crawl and drops the scavenger idea. The mockup says "Crawl"; change all UI copy and titles to "Hunt" (button "Find a Hunt"; "South Congress Tasting Hunt"; "Hyde Park Porch Hunt").
+3. **Open House Weekend** (`OPEN_HOUSE_WEEKEND`): a recurring multi-property scavenger hunt over a defined weekend, properties across a city or several neighborhoods, one digital passport, self-paced. Any mix of sale, rental, and lease properties. Differs from Home Hunt in scale and pace: a Hunt is one walkable afternoon; a Weekend is spread out and repeats (monthly is the plan). Card copy: "A whole weekend, homes across town, one passport. Go at your own pace and collect stamps."
+4. **Home Fair** (`HOME_FAIR`): not a generic home show. It is a **builder- or property-owner-hosted market gathering**: a builder opens a new community, or a large multifamily/commercial owner opens a property, like a market day, with model homes or units, local makers and food, live music, and lender/designer/mover/leasing-agent booths, and attendees collect stamps by visiting booths and units. Sold to builders, property owners, and sponsors (vendor booths, sponsorships). Card copy: "A builder's new neighborhood, opened up like a market. Tour model homes, meet local makers, and collect stamps." Seed a placeholder such as "Sunday Market at Willow Creek · Nov 7-8 · New neighborhood" (rename later). Its host may be a builder or property owner rather than a brokerage: show the host and any listing brokerage or leasing office.
+
+Every event, regardless of type, must have a stated real estate purpose (sale, rental, lease, or showcase) recorded on the Event record. Reflect this in the admin event form as a required field, not just a type dropdown.
 
 Keep the enum in one place (`lib/event-types.ts`) so a rename is a one-line change. The brand doc and business plan already use "Home Hunt".
 
 Home page shows House Party, Home Hunt, and Open House Weekend as the three main cards; Home Fair appears as a smaller "For builders" card or link to `/agents`. `/agents` has package cards for House Party, Home Hunt, Open House Weekend, and a Home Fair option for builders.
 
 ## Product rules that must hold
-1. **Consent before any lead leaves the system.** Sharing an attendee's details with an agent happens only if they ticked an explicit, unchecked-by-default consent box at RSVP. Store the consent flag, timestamp, and the exact consent text shown.
-2. **Attribution.** Any listing stop or event page shows the hosting licensed brokerage's name. Footer and `/agents` carry: "Haven Rush is an event marketing platform. Real estate services are provided by independent licensed partner agents."
-3. **RESPA / fair market value.** `/agents` and any sponsor-facing copy needs a short disclaimer that pricing reflects fair market value for advertising exposure. Use placeholder text and mark it `TODO(legal)`.
-4. **Utah review pending.** The business plan says advertising, referral, compensation and lead-gen rules need Utah review before launch. Don't hardcode legal claims; keep disclaimer copy in one editable file.
-5. **No unsourced statistics on public pages.** The brand doc quotes lead-cost and NAR figures (cost per lead, "78% work with first agent"). Don't publish them until sourced.
-6. Passport and pass URLs use unguessable tokens (no sequential IDs). No login for attendees.
+1. **Every event must have a stated real estate purpose.** At creation, an event records which purpose it serves: sale, rental, lease, or showcase. This isn't cosmetic — it's what keeps Haven Rush from being read as a generic party-venue platform. Show it (plainly, not legalistically) on the event page.
+2. **Consent before any lead leaves the system.** Sharing an attendee's details with an agent, landlord, or leasing office happens only if they ticked an explicit, unchecked-by-default consent box at RSVP. Store the consent flag, timestamp, and the exact consent text shown.
+3. **Attribution.** Any listing stop or event page shows the hosting licensed party's name (brokerage, property manager, or leasing office, whichever applies). Footer and `/agents` carry: "Haven Rush is an event marketing platform. Real estate services are provided by independent licensed partners."
+4. **RESPA / fair market value.** `/agents` and any sponsor-facing copy needs a short disclaimer that pricing reflects fair market value for advertising exposure. Use placeholder text and mark it `TODO(legal)`.
+5. **Utah review pending.** The business plan says advertising, referral, compensation and lead-gen rules need Utah review before launch. Don't hardcode legal claims; keep disclaimer copy in one editable file.
+6. **No unsourced statistics on public pages.** The brand doc quotes lead-cost and NAR figures (cost per lead, "78% work with first agent"). Don't publish them until sourced.
+7. Passport and pass URLs use unguessable tokens (no sequential IDs). No login for attendees.
 
 ## Placeholder data
 The mockup's events are set in Austin, TX (South Congress, Bouldin Creek, Hyde Park). Treat as placeholder seed data; make city/neighborhood plain data, not hardcoded UI.

@@ -1,4 +1,4 @@
-import type { EventType, StopKind } from "./event-types";
+import type { EventPurpose, EventType, StopKind } from "./event-types";
 
 /**
  * Placeholder seed data (Phase 1, no database yet — see CLAUDE.md Phase 2).
@@ -34,6 +34,7 @@ export type SeedEvent = {
   slug: string;
   title: string;
   type: EventType;
+  purpose: EventPurpose;
   neighborhood: string;
   city: string;
   state: string;
@@ -52,6 +53,7 @@ export const EVENTS: SeedEvent[] = [
     slug: "south-congress-tasting-hunt",
     title: "South Congress Tasting Hunt",
     type: "HOME_HUNT",
+    purpose: "SALE",
     neighborhood: "South Congress",
     city: "Austin",
     state: "TX",
@@ -167,6 +169,7 @@ export const EVENTS: SeedEvent[] = [
     slug: "elizabeth-st-social",
     title: "The Elizabeth St Social",
     type: "HOUSE_PARTY",
+    purpose: "SALE",
     neighborhood: "Bouldin Creek",
     city: "Austin",
     state: "TX",
@@ -203,6 +206,7 @@ export const EVENTS: SeedEvent[] = [
     slug: "austin-open-house-weekend",
     title: "Austin Open House Weekend",
     type: "OPEN_HOUSE_WEEKEND",
+    purpose: "SALE",
     neighborhood: "Citywide",
     city: "Austin",
     state: "TX",
@@ -277,6 +281,7 @@ export const EVENTS: SeedEvent[] = [
     slug: "hyde-park-porch-hunt",
     title: "Hyde Park Porch Hunt",
     type: "HOME_HUNT",
+    purpose: "SALE",
     neighborhood: "Hyde Park",
     city: "Austin",
     state: "TX",
@@ -328,6 +333,9 @@ export const EVENTS: SeedEvent[] = [
     slug: "sunday-market-at-willow-creek",
     title: "Sunday Market at Willow Creek",
     type: "HOME_FAIR",
+    // Model homes showcase the builder's available floor plans rather than
+    // being individually for sale themselves -- SHOWCASE, not SALE.
+    purpose: "SHOWCASE",
     neighborhood: "New neighborhood",
     city: "Austin",
     state: "TX",

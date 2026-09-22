@@ -16,6 +16,7 @@ export async function GET() {
       slug: event.slug,
       title: event.title,
       type: event.type,
+      purpose: event.purpose,
       neighborhood: event.neighborhood,
       city: event.city,
       startsAt: event.startsAt,

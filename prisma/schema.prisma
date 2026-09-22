@@ -24,6 +24,16 @@ enum EventType {
   HOME_FAIR
 }
 
+// The real estate purpose every event must state (CLAUDE.md: "Every event
+// must have a stated real estate purpose") -- separate from EventType,
+// which is the event's format, not what it's marketing the property for.
+enum EventPurpose {
+  SALE
+  RENTAL
+  LEASE
+  SHOWCASE
+}
+
 enum StopKind {
   LISTING
   COFFEE
@@ -70,10 +80,11 @@ model Agent {
 }
 
 model Event {
-  id           String    @id @default(cuid())
-  slug         String    @unique
+  id           String       @id @default(cuid())
+  slug         String       @unique
   title        String
   type         EventType
+  purpose      EventPurpose
   neighborhood String
   city         String
   startsAt     DateTime
