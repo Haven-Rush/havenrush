@@ -1,16 +1,3 @@
-# Save updated CLAUDE.md + site copy pass
-
-Replace the repo's CLAUDE.md with the exact content below (the attachment
-mechanism keeps failing, so it's inline this time). Then do the site copy
-pass: broaden the home hero, event type cards, and /agents page so nothing
-implies real estate is required for every event, while keeping the warm,
-non-salesy voice. Real estate stays the anchor category and its purpose
-badges (already built) stay as-is. Don't touch design tokens, colors, or the
-logo — the rebrand is on hold. Screenshot the home page, an event detail
-page, and /agents, then commit and open a PR into main. Don't merge.
-
----BEGIN CLAUDE.md---
-
 # Haven Rush — project brief for Claude Code
 
 Read this first, then `/docs`. Where this file and a docs file disagree, this file wins.
@@ -85,4 +72,12 @@ The mockup's events are set in Austin, TX (South Congress, Bouldin Creek, Hyde P
 ## Working style
 Build in phases; after each, run it, summarize what works, and stop for review before the next. Prefer small, tested pieces. Note anything you assumed in `DECISIONS.md`.
 
----END CLAUDE.md---
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
