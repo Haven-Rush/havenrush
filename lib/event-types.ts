@@ -9,11 +9,11 @@
 export const EVENT_TYPES = {
   HOUSE_PARTY: {
     label: "House Party",
-    tagline: "One home. Local coffee. Live music. Good company.",
+    tagline: "One property. Local coffee. Live music. Good company.",
   },
   HOME_HUNT: {
     label: "Home Hunt",
-    tagline: "Walk a handful of homes in an afternoon, with local food stops along the way.",
+    tagline: "Walk a handful of properties in an afternoon, with local food stops along the way.",
   },
   OPEN_HOUSE_WEEKEND: {
     label: "Open House Weekend",
@@ -47,3 +47,19 @@ export const STOP_KINDS = {
 } as const;
 
 export type StopKind = keyof typeof STOP_KINDS;
+
+/**
+ * The optional real estate purpose an event can state (CLAUDE.md product
+ * rule: "Purpose is optional, not required") -- what the event is
+ * marketing the property for, separate from EVENT_TYPES (its format).
+ */
+export const EVENT_PURPOSES = {
+  SALE: { label: "For Sale" },
+  RENTAL: { label: "For Rent" },
+  LEASE: { label: "Leasing" },
+  SHOWCASE: { label: "Showcase" },
+} as const;
+
+export type EventPurpose = keyof typeof EVENT_PURPOSES;
+
+export const EVENT_PURPOSE_ORDER: EventPurpose[] = ["SALE", "RENTAL", "LEASE", "SHOWCASE"];

@@ -24,6 +24,17 @@ enum EventType {
   HOME_FAIR
 }
 
+// Optional real estate purpose an event can state -- separate from
+// EventType, which is the event's format, not what it's marketing the
+// property for. Not required: real estate is one category Haven Rush
+// events can serve, not a platform-wide eligibility bar.
+enum EventPurpose {
+  SALE
+  RENTAL
+  LEASE
+  SHOWCASE
+}
+
 enum StopKind {
   LISTING
   COFFEE
@@ -70,10 +81,11 @@ model Agent {
 }
 
 model Event {
-  id           String    @id @default(cuid())
-  slug         String    @unique
+  id           String        @id @default(cuid())
+  slug         String        @unique
   title        String
   type         EventType
+  purpose      EventPurpose?
   neighborhood String
   city         String
   startsAt     DateTime

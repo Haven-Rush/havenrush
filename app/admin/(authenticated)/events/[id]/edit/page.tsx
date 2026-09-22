@@ -43,6 +43,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
           title: event.title,
           slug: event.slug,
           type: event.type,
+          purpose: event.purpose ?? "",
           neighborhood: event.neighborhood,
           city: event.city,
           startsAt: toDateTimeLocalValue(event.startsAt),

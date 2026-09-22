@@ -4,19 +4,19 @@ import { AgentInquiryForm } from "@/components/agent-inquiry-form";
 const PACKAGES = [
   {
     type: "House Party",
-    bullets: ["One listing. Coffee or live music sponsor.", "Leads go straight to your CRM."],
+    bullets: ["One property. Coffee or live music sponsor.", "Leads go straight to your CRM."],
   },
   {
     type: "Home Hunt",
     bullets: [
-      "Featured stop on a multi-home hunt.",
+      "Featured stop on a multi-property hunt.",
       "Passport placement and signage included.",
     ],
   },
   {
     type: "Open House Weekend",
     bullets: [
-      "Featured listing on a citywide passport.",
+      "Featured stop on a citywide passport.",
       "Signage included. Leads go to your CRM, with consent.",
     ],
   },
@@ -25,6 +25,13 @@ const PACKAGES = [
     bullets: [
       "Feature your model homes in a builder-hosted market.",
       "Leads go straight to your CRM, with consent.",
+    ],
+  },
+  {
+    type: "Coworking, Hotels & Venues",
+    bullets: [
+      "Host a House Party or Home Hunt on your own space — no listing required.",
+      "Same crowd, coffee, and stamped passport. Leads go straight to your CRM, with consent.",
     ],
   },
 ] as const;
@@ -38,7 +45,7 @@ export default function AgentsPage() {
     <div>
       <section className="mx-auto max-w-3xl px-6 pb-8 pt-16 text-center sm:px-8">
         <h1 className="mb-4 font-serif text-[clamp(28px,4.2vw,40px)] font-bold leading-tight text-sage">
-          Turn open houses into neighborhood events.
+          Turn your place into a neighborhood event.
         </h1>
         <p className="mx-auto max-w-lg text-base leading-relaxed text-charcoal/65">
           We bring the crowd, local coffee, and music. You meet people who actually want to be

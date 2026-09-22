@@ -22,6 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
       slug: event.slug,
       title: event.title,
       type: event.type,
+      purpose: event.purpose,
       neighborhood: event.neighborhood,
       city: event.city,
       startsAt: event.startsAt,

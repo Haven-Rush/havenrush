@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { EVENT_TYPE_ORDER, EVENT_TYPES } from "@/lib/event-types";
+import { EVENT_PURPOSE_ORDER, EVENT_PURPOSES, EVENT_TYPE_ORDER, EVENT_TYPES } from "@/lib/event-types";
 import { slugify } from "@/lib/slugify";
 import type { EventFormState } from "@/app/admin/(authenticated)/events/actions";
 
@@ -11,6 +11,7 @@ export type EventFormDefaultValues = {
   title: string;
   slug: string;
   type: string;
+  purpose: string;
   neighborhood: string;
   city: string;
   startsAt: string; // datetime-local value
@@ -95,6 +96,24 @@ export function EventForm({
           {EVENT_TYPE_ORDER.map((type) => (
             <option key={type} value={type}>
               {EVENT_TYPES[type].label}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field
+        label="Real estate purpose"
+        hint="Optional — what this event is marketing the property for, if it's real-estate-related"
+      >
+        <select
+          name="purpose"
+          defaultValue={defaultValues?.purpose ?? ""}
+          className={inputClass}
+        >
+          <option value="">Not specified</option>
+          {EVENT_PURPOSE_ORDER.map((purpose) => (
+            <option key={purpose} value={purpose}>
+              {EVENT_PURPOSES[purpose].label}
             </option>
           ))}
         </select>

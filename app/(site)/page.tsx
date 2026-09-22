@@ -8,11 +8,11 @@ export default function HomePage() {
         <h1 className="mb-6 font-serif text-[clamp(34px,5.2vw,56px)] font-bold leading-[1.14]">
           Walk the neighborhood.
           <br />
-          Meet the homes.
+          Meet the places.
         </h1>
         <p className="mx-auto mb-9 max-w-md text-lg leading-relaxed text-charcoal/70">
-          Explore local houses, sample neighborhood coffee, and listen to live music. No
-          pressure. No pushy agents.
+          Explore local spots, sample neighborhood coffee, and listen to live music. No
+          pressure. No pushy sales pitch.
         </p>
         <div className="mx-auto flex max-w-lg flex-wrap gap-2 rounded-2xl border border-charcoal/6 bg-white p-2 shadow-[0_12px_30px_rgba(31,36,33,0.08)]">
           <div className="flex min-w-[180px] flex-1 items-center px-3.5 py-2.5">
@@ -58,7 +58,7 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-8">
           <div className="max-w-md">
             <h2 className="mb-2.5 font-serif text-[27px] font-bold leading-tight text-linen">
-              Turn open houses into neighborhood events.
+              Turn your place into a neighborhood event.
             </h2>
             <p className="m-0 text-sm leading-relaxed text-linen/75">
               We bring the crowd, local coffee, and music. You meet people who actually want to

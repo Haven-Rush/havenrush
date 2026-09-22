@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { EVENT_TYPES, type EventType } from "@/lib/event-types";
+import { EVENT_PURPOSES, EVENT_TYPES, type EventPurpose, type EventType } from "@/lib/event-types";
 import { SLUG_RE } from "@/lib/slugify";
 import { fromDateTimeLocalValue } from "@/lib/admin-datetime";
 
@@ -13,6 +13,7 @@ type ParsedEvent = {
   title: string;
   slug: string;
   type: EventType;
+  purpose: EventPurpose | null;
   neighborhood: string;
   city: string;
   startsAt: Date;
@@ -25,6 +26,7 @@ function parseEventForm(formData: FormData): { data: ParsedEvent } | { error: st
   const title = String(formData.get("title") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
   const type = String(formData.get("type") ?? "");
+  const purpose = String(formData.get("purpose") ?? "");
   const neighborhood = String(formData.get("neighborhood") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
   const startsAtRaw = String(formData.get("startsAt") ?? "");
@@ -40,6 +42,11 @@ function parseEventForm(formData: FormData): { data: ParsedEvent } | { error: st
   }
   if (!(type in EVENT_TYPES)) {
     return { error: "Invalid event type." };
+  }
+  // purpose is optional -- "" means not specified, otherwise it must be a
+  // real EventPurpose value.
+  if (purpose && !(purpose in EVENT_PURPOSES)) {
+    return { error: "Invalid event purpose." };
   }
 
   const startsAt = fromDateTimeLocalValue(startsAtRaw);
@@ -73,6 +80,7 @@ function parseEventForm(formData: FormData): { data: ParsedEvent } | { error: st
       title,
       slug,
       type: type as EventType,
+      purpose: purpose ? (purpose as EventPurpose) : null,
       neighborhood,
       city,
       startsAt,

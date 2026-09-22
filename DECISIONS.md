@@ -1,5 +1,200 @@
 # Decisions & assumptions
 
+## Site copy pass: home hero, event type cards, /agents (2026-09-22)
+Step 2 of the broadened-positioning work, now explicitly requested.
+
+### What changed
+- Home hero: "Meet the homes." -> "Meet the places."; "Explore local
+  houses... No pushy agents." -> "Explore local spots... No pushy sales
+  pitch." (generalized past real-estate agents specifically).
+- Home page + `/agents` shared CTA: "Turn open houses into neighborhood
+  events." -> "Turn your place into a neighborhood event."
+- `lib/event-types.ts` taglines: House Party and Home Hunt swapped "home(s)"
+  for "property/properties," matching CLAUDE.md's own vocabulary
+  definitions (which already say "property," not "home," for these two).
+  Open House Weekend's and Home Fair's taglines are untouched: CLAUDE.md
+  quotes both verbatim as required "Card copy," so they're pinned text,
+  not mine to reword.
+- `/agents` package cards: "One listing" -> "One property" (House Party),
+  "multi-home hunt" -> "multi-property hunt" (Home Hunt), "Featured
+  listing" -> "Featured stop" (Open House Weekend). Home Fair's copy is
+  untouched -- "model homes" is core to that format's actual concept
+  (a builder's model-home tour), not a generic "homes" reference to
+  broaden.
+- Added a fifth `/agents` package card, "Coworking, Hotels & Venues,"
+  alongside the existing four rather than replacing any of them, per the
+  request. It doesn't introduce a new EventType -- CLAUDE.md keeps the
+  four types as the real-estate anchor category and says new categories
+  "may grow later," not now -- so the card invites non-real-estate hosts
+  to use the existing House Party / Home Hunt formats on their own space.
+- `AgentInquiryForm`'s "Brokerage" placeholder -> "Company or brokerage."
+  Purely a label string; the underlying `brokerage` field name in the
+  schema/API/admin views is untouched. Adding a card that invites hotels
+  and coworking spaces to fill out a form asking for their "Brokerage"
+  would undercut the copy it sits next to, but renaming the actual field
+  end-to-end is bigger scope than a copy pass -- flagging it as a
+  candidate for a real follow-up rather than doing it silently here.
+- Fixed a stale doc comment above `EVENT_PURPOSES` in `lib/event-types.ts`
+  left over from before purpose became optional ("every event must
+  state" -> references the actual current product rule).
+
+### Verified against a real local database, not just build/lint
+Screenshots needed real seeded data (the purpose badge, "Hosted with"
+brokerages, stop counts), and this sandbox has no Supabase access. Rather
+than skip the event detail page again, spun up a throwaway local
+Postgres 16 cluster (already installed in the image) under `/tmp`
+-- the assigned scratchpad directory's parent chain is `drwx------`
+owned by root, which the unprivileged `postgres` user can't traverse, so
+`initdb` there fails; `/tmp` itself is world-traversable, making it the
+only viable location for this. Ran `prisma migrate deploy` (all 5
+migrations, including this session's `add_event_purpose`, applied
+cleanly for the first time against a real database rather than just
+diffed) and the seed script against it, pointed a throwaway `next dev`
+at it, and screenshotted home/`event-detail`/`agents` for real. Stopped
+Postgres and deleted the cluster, logs, and scratch scripts afterward --
+nothing local-only was left running or on disk, and Supabase/production
+were never touched.
+
+## Broaden scope again: places, not just real estate (2026-09-22)
+CLAUDE.md replaced with the user-provided text (this time it arrived in
+full — the previous two attempts referenced an "attached" file that
+never came through, see the entries below). Widens Haven Rush from "real
+estate spaces" to "places" generally (homes, coworking, vacation stays,
+hotels, commercial/community spaces, local destinations), with real
+estate as the anchor category and first market rather than the whole
+platform. Supersedes the "real estate spaces" framing from the entry two
+below — that framing is now itself one step behind, same as its own
+predecessor.
+
+Scope of what actually changed in code this round, deliberately kept
+narrow since this message (unlike the earlier "Required: 1/2/3/4..."
+one) was the corrected doc text alone, not a new set of build
+instructions:
+- CLAUDE.md swapped in verbatim (preserving the auto-injected Next.js
+  agent-rules block).
+- `ATTRIBUTION_STATEMENT` (`lib/site-config.ts`) updated to the new
+  exact wording CLAUDE.md's product rule #3 quotes verbatim ("Licensed
+  real estate services, where applicable, are provided by independent
+  licensed partners") — a concrete, unambiguous required-copy sync, not
+  a judgment call. Confirmed it's the single source both the footer and
+  `/agents` read from (they share `(site)/layout.tsx`), so one edit
+  covers both, per CLAUDE.md's "keep disclaimer copy in one editable
+  file" rule.
+- `EventPurpose` enum left as `SALE | RENTAL | LEASE | SHOWCASE` — the
+  new doc's product rule #1 lists "stay, visit, tour" as illustrative
+  examples of what a non-real-estate event might record, not a mandate
+  to add those values now; no event type or feature consuming them
+  exists yet, so adding them would be speculative schema surface ahead
+  of an actual need.
+
+The broader home-page/event-card/`/agents` copy pass (the original
+"step 2," pending review since step 1) is still open and unstarted —
+this message didn't re-trigger it, so it's not assumed. Design tokens
+again untouched: the new CLAUDE.md explicitly keeps the tropical/
+place-discovery rebrand idea "on hold," consistent with the earlier
+instruction not to touch colors.
+
+## Correction: Event.purpose is optional, not required (2026-09-22)
+Reversed course from the entry directly below, per explicit user
+correction: real estate is one category Haven Rush events can serve, not
+a requirement for every event to exist on the platform. The "required"
+framing in that entry (and in the CLAUDE.md version it was built from)
+no longer holds; a newer CLAUDE.md replaces it.
+
+State at the time of correction: schema/admin/API work (the entry below)
+was committed and pushed to `feature/event-purpose`, not merged, not yet
+a PR. The site copy pass (home hero, event cards, `/agents`) hadn't
+started, so there was no copy implying eligibility to undo, and design
+tokens/colors were never touched (explicitly on hold, separate
+rebrand conversation).
+
+Changes made:
+- `Event.purpose` is now `EventPurpose?` (nullable), not required.
+- The migration (`20260922000000_add_event_purpose`) never shipped
+  anywhere — not merged, not deployed — so it's edited in place to add
+  the column as nullable, rather than layering a second "make it
+  optional" migration on top of a required column nothing ever saw.
+  Dropped the SALE backfill along with it: an optional column has
+  nothing to backfill.
+- Admin form: `required` removed from the purpose `<select>`; its blank
+  option changed from a disabled placeholder ("Select a purpose…") to a
+  real, submittable "Not specified" choice.
+- `parseEventForm`/`createEvent`/`updateEvent`: purpose validation now
+  only fires when a non-empty value was submitted; empty submits as
+  `null`.
+- Event detail page badge: now conditionally rendered (`event.purpose &&
+  …`) since the value can be `null`.
+- Seed data (`lib/seed-data.ts`) and its 5 assigned purposes were left
+  as-is — the field itself being optional doesn't mean existing accurate
+  values should be stripped; they're still useful, per the correction.
+
+## Broaden positioning: Event.purpose (2026-09-22)
+CLAUDE.md rewritten to broaden Haven Rush from "home discovery" to any real
+estate space (sale, rental, lease, or showcase), with a stated real estate
+purpose as the eligibility bar for every event — this entry covers the
+schema/admin/API side of that (step 1); the site copy pass is a separate
+step, reviewed before starting.
+
+### `EventPurpose` is its own enum, not folded into `EventType`
+`EventType` is the event's *format* (House Party, Home Hunt, Open House
+Weekend, Home Fair); purpose is what it's marketing the property *for*
+(sale, rental, lease, showcase). They're independent axes — a Home Hunt can
+be sale-only homes or a mix of rentals and leases; a Home Fair showcases
+model homes rather than selling that specific unit. Collapsing them into
+one enum would force a combinatorial explosion of types or lose one axis.
+
+### No admin-form default — forces an explicit choice
+`EventForm`'s existing Type field silently defaults to the first option
+(`EVENT_TYPE_ORDER[0]`) when creating a new event. Purpose deliberately
+doesn't follow that pattern: CLAUDE.md's product rule frames this as
+something "checked at listing/host onboarding, not just implied" — so the
+select starts on a disabled blank option (`defaultValue=""`), and
+`required` blocks submission until the host actually picks one. Editing an
+existing event still pre-fills its current value as usual.
+
+### Migration backfills existing rows to SALE, but the app never does
+Adding a NOT NULL column needs every existing row to get a value before
+the constraint can be applied. All of this project's rows to date (seed
+data, and anything created via `/admin` before this ships) are home-for-
+sale listings, so `SALE` is an accurate one-time backfill — but it's a
+migration-only convenience, not an app default: the admin form has no
+default (see above), and every seed event now states its purpose
+explicitly (see below), so nothing in the running app relies on that
+backfill after it runs once.
+
+### Seed data purposes
+Four of the five seeded events (South Congress Tasting Hunt, The
+Elizabeth St Social, Austin Open House Weekend, Hyde Park Porch Hunt) are
+straightforward home-for-sale listings with a brokerage and agent attached
+— `SALE`. Sunday Market at Willow Creek (the Home Fair) is `SHOWCASE`
+instead: its stops are a builder's model homes, which market the
+community's available floor plans rather than being individually for sale
+themselves — that's what CLAUDE.md's showcase example describes. No seed
+event uses `RENTAL`/`LEASE` — nothing in the existing placeholder data
+(all Austin single-family homes with sale-side brokerages) fits either
+purpose, and fabricating a rental/lease example wasn't asked for.
+
+### Stop keeps just `kind`, no per-stop purpose
+CLAUDE.md's vocabulary section says a Home Hunt's stops "can mix for-sale
+homes, rentals, and leasing units in one hunt," which could read as needing
+per-stop purpose tracking. Decided against it: product rule #1 scopes the
+required field to "recorded on the Event record" specifically, singular,
+and describes it as *the* eligibility bar for the event, not per-property.
+The "mixing" language describes real-world variety a host might walk
+attendees through, not a schema requirement — nothing else in CLAUDE.md
+(the admin form spec, the event detail badge, the API shape) asks for a
+purpose per stop. Adding one now would be schema/UI scope beyond what was
+asked, for a distinction (this stop is a rental, that one's a sale) that
+has no consumer yet. If a future format genuinely needs it, `Stop` already
+has `kind` as the place a per-stop attribute like this would go.
+
+### `purpose` added to `/api/events` and `/api/events/[slug]`
+Not explicitly requested, but both routes already expose `type` (the same
+kind of event-level classification) — leaving the new required field out
+of the public API while the admin form, seed data, and event detail page
+all treat it as core would be an inconsistent contract. No new exposure
+risk: `purpose` is exactly as public as `type` already is.
+
 ## Remove `/api/health/self-check` after a confirmed-good production check (2026-09-22)
 Ran against the live deployment (by the user, since this sandbox still
 can't reach `havenrush.com`): `{"ok":true,"events":{"count":5},
