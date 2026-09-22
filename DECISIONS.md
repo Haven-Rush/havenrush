@@ -1,5 +1,60 @@
 # Decisions & assumptions
 
+## Site copy pass: home hero, event type cards, /agents (2026-09-22)
+Step 2 of the broadened-positioning work, now explicitly requested.
+
+### What changed
+- Home hero: "Meet the homes." -> "Meet the places."; "Explore local
+  houses... No pushy agents." -> "Explore local spots... No pushy sales
+  pitch." (generalized past real-estate agents specifically).
+- Home page + `/agents` shared CTA: "Turn open houses into neighborhood
+  events." -> "Turn your place into a neighborhood event."
+- `lib/event-types.ts` taglines: House Party and Home Hunt swapped "home(s)"
+  for "property/properties," matching CLAUDE.md's own vocabulary
+  definitions (which already say "property," not "home," for these two).
+  Open House Weekend's and Home Fair's taglines are untouched: CLAUDE.md
+  quotes both verbatim as required "Card copy," so they're pinned text,
+  not mine to reword.
+- `/agents` package cards: "One listing" -> "One property" (House Party),
+  "multi-home hunt" -> "multi-property hunt" (Home Hunt), "Featured
+  listing" -> "Featured stop" (Open House Weekend). Home Fair's copy is
+  untouched -- "model homes" is core to that format's actual concept
+  (a builder's model-home tour), not a generic "homes" reference to
+  broaden.
+- Added a fifth `/agents` package card, "Coworking, Hotels & Venues,"
+  alongside the existing four rather than replacing any of them, per the
+  request. It doesn't introduce a new EventType -- CLAUDE.md keeps the
+  four types as the real-estate anchor category and says new categories
+  "may grow later," not now -- so the card invites non-real-estate hosts
+  to use the existing House Party / Home Hunt formats on their own space.
+- `AgentInquiryForm`'s "Brokerage" placeholder -> "Company or brokerage."
+  Purely a label string; the underlying `brokerage` field name in the
+  schema/API/admin views is untouched. Adding a card that invites hotels
+  and coworking spaces to fill out a form asking for their "Brokerage"
+  would undercut the copy it sits next to, but renaming the actual field
+  end-to-end is bigger scope than a copy pass -- flagging it as a
+  candidate for a real follow-up rather than doing it silently here.
+- Fixed a stale doc comment above `EVENT_PURPOSES` in `lib/event-types.ts`
+  left over from before purpose became optional ("every event must
+  state" -> references the actual current product rule).
+
+### Verified against a real local database, not just build/lint
+Screenshots needed real seeded data (the purpose badge, "Hosted with"
+brokerages, stop counts), and this sandbox has no Supabase access. Rather
+than skip the event detail page again, spun up a throwaway local
+Postgres 16 cluster (already installed in the image) under `/tmp`
+-- the assigned scratchpad directory's parent chain is `drwx------`
+owned by root, which the unprivileged `postgres` user can't traverse, so
+`initdb` there fails; `/tmp` itself is world-traversable, making it the
+only viable location for this. Ran `prisma migrate deploy` (all 5
+migrations, including this session's `add_event_purpose`, applied
+cleanly for the first time against a real database rather than just
+diffed) and the seed script against it, pointed a throwaway `next dev`
+at it, and screenshotted home/`event-detail`/`agents` for real. Stopped
+Postgres and deleted the cluster, logs, and scratch scripts afterward --
+nothing local-only was left running or on disk, and Supabase/production
+were never touched.
+
 ## Broaden scope again: places, not just real estate (2026-09-22)
 CLAUDE.md replaced with the user-provided text (this time it arrived in
 full — the previous two attempts referenced an "attached" file that
