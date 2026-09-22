@@ -6,7 +6,7 @@ import { CONSENT_TEXT } from "@/lib/site-config";
 import { storePassToken } from "@/lib/pass-storage";
 
 type Timeline = "JUST_LOOKING" | "MOVING_SOON";
-type Intent = "BUYING" | "RENTING";
+type Intent = "EXPLORING" | "BUYING" | "RENTING";
 
 const TIMELINE_OPTIONS: { value: Timeline; label: string }[] = [
   { value: "JUST_LOOKING", label: "Just looking" },
@@ -14,6 +14,7 @@ const TIMELINE_OPTIONS: { value: Timeline; label: string }[] = [
 ];
 
 const INTENT_OPTIONS: { value: Intent; label: string }[] = [
+  { value: "EXPLORING", label: "Just exploring" },
   { value: "BUYING", label: "Buying" },
   { value: "RENTING", label: "Renting" },
 ];
@@ -23,7 +24,7 @@ export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [timeline, setTimeline] = useState<Timeline>("JUST_LOOKING");
-  const [intent, setIntent] = useState<Intent>("BUYING");
+  const [intent, setIntent] = useState<Intent>("EXPLORING");
   const [agentContactConsent, setAgentContactConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +121,7 @@ export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
           marginClass="mb-[18px]"
         />
         <PillGroup
-          label="Type"
+          label="What brings you?"
           options={INTENT_OPTIONS}
           value={intent}
           onChange={setIntent}

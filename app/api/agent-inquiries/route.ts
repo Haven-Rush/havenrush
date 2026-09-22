@@ -21,13 +21,14 @@ export async function POST(request: Request) {
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-  const brokerage = typeof body.brokerage === "string" ? body.brokerage.trim() : "";
+  const brokerage =
+    typeof body.brokerage === "string" && body.brokerage.trim() ? body.brokerage.trim() : undefined;
   const packageInterest = typeof body.packageInterest === "string" ? body.packageInterest.trim() : "";
   const message = typeof body.message === "string" ? body.message.trim() : "";
 
-  if (!name || !email || !brokerage || !packageInterest || !message) {
+  if (!name || !email || !packageInterest || !message) {
     return NextResponse.json(
-      { error: "name, email, brokerage, packageInterest, and message are required" },
+      { error: "name, email, packageInterest, and message are required" },
       { status: 400 },
     );
   }

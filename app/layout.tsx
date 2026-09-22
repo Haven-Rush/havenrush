@@ -16,7 +16,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "Haven Rush",
-  description: "Walk the neighborhood. Meet the homes.",
+  description: "Walk the neighborhood. Meet the places.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

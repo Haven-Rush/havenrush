@@ -31,8 +31,7 @@ export function AgentInquiryForm({ packageInterest }: { packageInterest: string 
     );
   }
 
-  const canSubmit =
-    name.trim() && email.trim() && brokerage.trim() && message.trim() && !submitting;
+  const canSubmit = name.trim() && email.trim() && message.trim() && !submitting;
 
   const handleSubmit = async () => {
     setError(null);
@@ -81,7 +80,7 @@ export function AgentInquiryForm({ packageInterest }: { packageInterest: string 
         type="text"
         value={brokerage}
         onChange={(e) => setBrokerage(e.target.value)}
-        placeholder="Company or brokerage"
+        placeholder="Company or brokerage (optional)"
         className="w-full rounded-xl border border-charcoal/15 bg-white px-3.5 py-2.5 text-sm text-charcoal outline-none focus:border-sage"
       />
       <textarea

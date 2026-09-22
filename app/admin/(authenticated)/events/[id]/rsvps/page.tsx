@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const INTENT_LABELS: Record<string, string> = {
+  EXPLORING: "Just exploring",
   BUYING: "Buying",
   RENTING: "Renting",
 };
@@ -47,7 +48,7 @@ export default async function EventRsvpsPage({ params }: { params: Promise<{ id:
             <tr className="border-b border-charcoal/10 text-[11px] uppercase tracking-wide text-charcoal/50">
               <th className="px-4 py-3 font-bold">Email</th>
               <th className="px-4 py-3 font-bold">Name</th>
-              <th className="px-4 py-3 font-bold">Intent</th>
+              <th className="px-4 py-3 font-bold">Interest</th>
               <th className="px-4 py-3 font-bold">Timeline</th>
               <th className="px-4 py-3 font-bold">Consent</th>
               <th className="px-4 py-3 font-bold">Stamps</th>
