@@ -36,9 +36,11 @@ export default async function EventDetailPage({
         <span className="text-[11px] font-extrabold uppercase tracking-wide text-honey-text">
           {EVENT_TYPES[event.type].label}
         </span>
-        <span className="rounded-full border border-sage/30 px-2.5 py-0.5 text-[11px] font-bold text-sage">
-          {EVENT_PURPOSES[event.purpose].label}
-        </span>
+        {event.purpose && (
+          <span className="rounded-full border border-sage/30 px-2.5 py-0.5 text-[11px] font-bold text-sage">
+            {EVENT_PURPOSES[event.purpose].label}
+          </span>
+        )}
       </div>
       <h1 className="mb-2 font-serif text-[clamp(26px,3.8vw,36px)] font-bold">{event.title}</h1>
       <p className="mb-2 text-sm text-charcoal/55">

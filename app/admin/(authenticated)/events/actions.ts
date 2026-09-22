@@ -13,7 +13,7 @@ type ParsedEvent = {
   title: string;
   slug: string;
   type: EventType;
-  purpose: EventPurpose;
+  purpose: EventPurpose | null;
   neighborhood: string;
   city: string;
   startsAt: Date;
@@ -34,17 +34,7 @@ function parseEventForm(formData: FormData): { data: ParsedEvent } | { error: st
   const description = String(formData.get("description") ?? "").trim();
   const rewardTiersRaw = String(formData.get("rewardTiers") ?? "[]");
 
-  if (
-    !title ||
-    !slug ||
-    !type ||
-    !purpose ||
-    !neighborhood ||
-    !city ||
-    !startsAtRaw ||
-    !endsAtRaw ||
-    !description
-  ) {
+  if (!title || !slug || !type || !neighborhood || !city || !startsAtRaw || !endsAtRaw || !description) {
     return { error: "All fields are required." };
   }
   if (!SLUG_RE.test(slug)) {
@@ -53,7 +43,9 @@ function parseEventForm(formData: FormData): { data: ParsedEvent } | { error: st
   if (!(type in EVENT_TYPES)) {
     return { error: "Invalid event type." };
   }
-  if (!(purpose in EVENT_PURPOSES)) {
+  // purpose is optional -- "" means not specified, otherwise it must be a
+  // real EventPurpose value.
+  if (purpose && !(purpose in EVENT_PURPOSES)) {
     return { error: "Invalid event purpose." };
   }
 
@@ -88,7 +80,7 @@ function parseEventForm(formData: FormData): { data: ParsedEvent } | { error: st
       title,
       slug,
       type: type as EventType,
-      purpose: purpose as EventPurpose,
+      purpose: purpose ? (purpose as EventPurpose) : null,
       neighborhood,
       city,
       startsAt,

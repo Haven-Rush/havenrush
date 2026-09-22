@@ -1,5 +1,39 @@
 # Decisions & assumptions
 
+## Correction: Event.purpose is optional, not required (2026-09-22)
+Reversed course from the entry directly below, per explicit user
+correction: real estate is one category Haven Rush events can serve, not
+a requirement for every event to exist on the platform. The "required"
+framing in that entry (and in the CLAUDE.md version it was built from)
+no longer holds; a newer CLAUDE.md replaces it.
+
+State at the time of correction: schema/admin/API work (the entry below)
+was committed and pushed to `feature/event-purpose`, not merged, not yet
+a PR. The site copy pass (home hero, event cards, `/agents`) hadn't
+started, so there was no copy implying eligibility to undo, and design
+tokens/colors were never touched (explicitly on hold, separate
+rebrand conversation).
+
+Changes made:
+- `Event.purpose` is now `EventPurpose?` (nullable), not required.
+- The migration (`20260922000000_add_event_purpose`) never shipped
+  anywhere — not merged, not deployed — so it's edited in place to add
+  the column as nullable, rather than layering a second "make it
+  optional" migration on top of a required column nothing ever saw.
+  Dropped the SALE backfill along with it: an optional column has
+  nothing to backfill.
+- Admin form: `required` removed from the purpose `<select>`; its blank
+  option changed from a disabled placeholder ("Select a purpose…") to a
+  real, submittable "Not specified" choice.
+- `parseEventForm`/`createEvent`/`updateEvent`: purpose validation now
+  only fires when a non-empty value was submitted; empty submits as
+  `null`.
+- Event detail page badge: now conditionally rendered (`event.purpose &&
+  …`) since the value can be `null`.
+- Seed data (`lib/seed-data.ts`) and its 5 assigned purposes were left
+  as-is — the field itself being optional doesn't mean existing accurate
+  values should be stripped; they're still useful, per the correction.
+
 ## Broaden positioning: Event.purpose (2026-09-22)
 CLAUDE.md rewritten to broaden Haven Rush from "home discovery" to any real
 estate space (sale, rental, lease, or showcase), with a stated real estate

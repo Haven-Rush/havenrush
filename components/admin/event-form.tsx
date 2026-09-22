@@ -103,19 +103,14 @@ export function EventForm({
 
       <Field
         label="Real estate purpose"
-        hint="What this event is marketing the property for — required, not implied by the type"
+        hint="Optional — what this event is marketing the property for, if it's real-estate-related"
       >
-        {/* No default selection (unlike Type above) — CLAUDE.md requires this
-            to be an explicit choice at creation, not silently implied. */}
         <select
           name="purpose"
-          required
           defaultValue={defaultValues?.purpose ?? ""}
           className={inputClass}
         >
-          <option value="" disabled>
-            Select a purpose…
-          </option>
+          <option value="">Not specified</option>
           {EVENT_PURPOSE_ORDER.map((purpose) => (
             <option key={purpose} value={purpose}>
               {EVENT_PURPOSES[purpose].label}
