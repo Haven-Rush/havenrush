@@ -27,9 +27,9 @@ Haven Rush launches as a simple two-sided marketplace. Keep it this simple — d
 
 - **Hosts create and list experiences for $0 upfront.** No listing fee, no subscription.
 - **Consumers pay the host's listed price** to book an experience. The host sets this price (free-form field, not a tier enum). $0 is a valid price (free experience).
-- **Haven Rush keeps a percentage of each paid booking**; the host receives the remainder after Haven Rush's cut and payment-processing costs. The percentage is a single configurable value (env var or settings table, not hardcoded in multiple places) — exact number still being decided against comparable marketplaces and Haven Rush's costs, so don't hardcode an assumption in the UI copy either. Pull it from the same config value.
+- **Haven Rush keeps a percentage of each paid booking**; the host receives the remainder after Haven Rush's cut and payment-processing costs. The percentage is a single configurable value (env var or settings table, not hardcoded in multiple places) — exact number still being decided against comparable marketplaces and Haven Rush's costs, so don't hardcode an assumption in the UI copy either (e.g. don't print "15%" anywhere in user-facing text; pull it from the same config value).
 - **Free experiences ($0) earn Haven Rush nothing** — no commission, no Stripe transaction at all for those.
-- **Not at launch — do not build:** paid add-ons/upsells, host subscriptions, business referral/affiliate fees, sponsorships, advertising.
+- **Not at launch — do not build:** paid add-ons/upsells, host subscriptions, business referral/affiliate fees, sponsorships, advertising. These are explicitly deferred until Haven Rush has demonstrated demand and regular marketplace activity.
 
 ## Files
 - `docs/mockup/Haven_Rush_App_v2_dc.html` — visual + interaction reference (5 views). **Not a codebase**: it is a design-tool export (`x-dc` format, inline styles, `useState`-style view switching) that also expects `support.js` and `ios-frame.jsx`. Rebuild it; don't try to run or extend it.
@@ -81,7 +81,7 @@ Home page shows House Party, Home Hunt, and Open House Weekend as the three main
 2. **Consent before any lead leaves the system.** Explicit, unchecked-by-default consent box at RSVP.
 3. **Attribution.** Footer/`/agents`: "Haven Rush is an event marketing platform. Licensed real estate services, where applicable, are provided by independent licensed partners."
 4. **RESPA / fair market value.** Real-estate-category events only, `TODO(legal)` placeholder.
-4a. **Liability waiver.** RSVP/registration needs a liability waiver/ToS checkbox in addition to the consent checkbox, `TODO(legal)` placeholder, stored acceptance with timestamp + text version.
+4a. **Liability waiver.** Since hosts now create their own experiences, including multi-location, physical-movement formats, RSVP/registration needs a liability waiver / terms-of-service acceptance checkbox before someone can register, in addition to the existing lead-consent checkbox. Placeholder text, mark it `TODO(legal)`, but the checkbox and stored acceptance (timestamp + text version) should exist from Phase 2 of the host platform onward.
 5. **Utah review pending.**
 6. **No unsourced statistics on public pages.**
 7. Passport and pass URLs use unguessable tokens. No login for attendees.
