@@ -13,6 +13,15 @@ Every event still runs on the same mechanic: coffee, live music, local food, a s
 
 **Brand note (on hold):** a tropical/place-discovery visual direction (pineapple motif, brighter palette) has been discussed as a better fit for this broader scope than the current sage/honey "neighborhood" identity, but it is **not being built yet**. Keep the current design tokens below until told otherwise.
 
+## Platform model: hosts create experiences, Haven Rush approves
+Haven Rush is a platform, not an event producer. **Hosts create their own experiences; Haven Rush reviews and approves before anything goes public.** This replaces any earlier assumption that admin/Haven Rush creates every event directly.
+
+Flow: a host applies → Haven Rush approves the host → the approved host picks a place and an experience format (the four existing types are formats, not a fixed ceiling) → the host builds the experience (activities/stops, participating businesses, schedule, capacity, price) → submits for review → Haven Rush approves/rejects → once approved, it's published and the existing consumer flow (browse, RSVP, QR stamps, passport) runs unchanged.
+
+The distinctive part of the product: Haven Rush gives hosts a structured format for creating something they wouldn't normally offer, not a generic "list your event" tool.
+
+`/admin` shifts role: it becomes the **host application and experience approval queue** first, with direct admin event creation as a secondary/exception path (useful for Haven Rush's own seeded or admin-run pilots), not the primary way events get made.
+
 ## Files
 - `docs/mockup/Haven_Rush_App_v2_dc.html` — visual + interaction reference (5 views). **Not a codebase**: it is a design-tool export (`x-dc` format, inline styles, `useState`-style view switching) that also expects `support.js` and `ios-frame.jsx`. Rebuild it; don't try to run or extend it.
 - `docs/brand-guidelines.md` — voice, colors, type, signage, compliance notes.
@@ -62,6 +71,7 @@ Home page shows House Party, Home Hunt, and Open House Weekend as the three main
 2. **Consent before any lead leaves the system.** Sharing an attendee's details with a host, agent, landlord, or leasing office happens only if they ticked an explicit, unchecked-by-default consent box at RSVP. Store the consent flag, timestamp, and the exact consent text shown.
 3. **Attribution.** Any listing stop or event page shows the hosting party's name (brokerage, property manager, leasing office, coworking operator, venue, whichever applies). Footer and `/agents` carry: "Haven Rush is an event marketing platform. Licensed real estate services, where applicable, are provided by independent licensed partners."
 4. **RESPA / fair market value.** Applies specifically to real-estate-category events. `/agents` and any sponsor-facing copy for those needs a short disclaimer that pricing reflects fair market value for advertising exposure. Use placeholder text and mark it `TODO(legal)`.
+4a. **Liability waiver.** Since hosts now create their own experiences, including multi-location, physical-movement formats, RSVP/registration needs a liability waiver / terms-of-service acceptance checkbox before someone can register, in addition to the existing lead-consent checkbox. Placeholder text, mark it `TODO(legal)`, but the checkbox and stored acceptance (timestamp + text version) should exist from Phase 2 of the host platform onward.
 5. **Utah review pending.** The business plan says advertising, referral, compensation and lead-gen rules need Utah review before launch, for the real-estate category specifically. Don't hardcode legal claims; keep disclaimer copy in one editable file.
 6. **No unsourced statistics on public pages.** The brand doc quotes lead-cost and NAR figures (cost per lead, "78% work with first agent"). Don't publish them until sourced.
 7. Passport and pass URLs use unguessable tokens (no sequential IDs). No login for attendees.
@@ -71,13 +81,3 @@ The mockup's events are set in Austin, TX (South Congress, Bouldin Creek, Hyde P
 
 ## Working style
 Build in phases; after each, run it, summarize what works, and stop for review before the next. Prefer small, tested pieces. Note anything you assumed in `DECISIONS.md`.
-
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
