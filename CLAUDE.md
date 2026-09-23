@@ -22,6 +22,16 @@ The distinctive part of the product: Haven Rush gives hosts a structured format 
 
 `/admin` shifts role: it becomes the **host application and experience approval queue** first, with direct admin event creation as a secondary/exception path (useful for Haven Rush's own seeded or admin-run pilots), not the primary way events get made.
 
+## Pricing model (launch)
+Haven Rush launches as a simple two-sided marketplace. Keep it this simple —
+don't add complexity beyond what's below without an explicit decision to do so.
+
+- **Hosts create and list experiences for $0 upfront.** No listing fee, no subscription.
+- **Consumers pay the host's listed price** to book an experience. The host sets this price (free-form field, not a tier enum). $0 is a valid price (free experience).
+- **Haven Rush keeps a percentage of each paid booking**; the host receives the remainder after Haven Rush's cut and payment-processing costs. The percentage is a single configurable value (env var or settings table, not hardcoded in multiple places) — exact number still being decided against comparable marketplaces and Haven Rush's costs, so don't hardcode an assumption in the UI copy either (e.g. don't print "15%" anywhere in user-facing text; pull it from the same config value).
+- **Free experiences ($0) earn Haven Rush nothing** — no commission, no Stripe transaction at all for those.
+- **Not at launch — do not build:** paid add-ons/upsells, host subscriptions, business referral/affiliate fees, sponsorships, advertising. These are explicitly deferred until Haven Rush has demonstrated demand and regular marketplace activity.
+
 ## Files
 - `docs/mockup/Haven_Rush_App_v2_dc.html` — visual + interaction reference (5 views). **Not a codebase**: it is a design-tool export (`x-dc` format, inline styles, `useState`-style view switching) that also expects `support.js` and `ios-frame.jsx`. Rebuild it; don't try to run or extend it.
 - `docs/brand-guidelines.md` — voice, colors, type, signage, compliance notes.
