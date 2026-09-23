@@ -60,6 +60,19 @@ enum LeadDeliveryStatus {
   FAILED
 }
 
+enum HostStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EventStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+}
+
 model Attendee {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -94,10 +107,41 @@ model Event {
   description  String
   /// e.g. [{"stops":3,"reward":"Free coffee"}]
   rewardTiers  Json
+  // null = Haven-Rush-direct (admin-created), matching every event to date.
+  // Not yet read by any visibility check -- see Host model's doc comment.
+  hostId       String?
+  status       EventStatus   @default(PUBLISHED)
 
+  host     Host?     @relation(fields: [hostId], references: [id], onDelete: SetNull)
   stops    Stop[]
   sponsors Sponsor[]
   passes   Pass[]
+
+  @@index([hostId])
+}
+
+// Phase 1 of the host platform (see CLAUDE.md "Platform model"): a host
+// account that applies, gets approved by Haven Rush admin, and can then log
+// in. This phase only builds application + approval + login -- the
+// experience-creation dashboard, the per-experience approval queue, and
+// wiring Event.status into what the public site shows are later phases.
+model Host {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  // What they're applying to host with -- not in the original Phase 1 spec's
+  // field list, but the application form it also specifies ("what
+  // place/business, brief description") needs somewhere to land for the
+  // admin approval queue to actually review. See DECISIONS.md.
+  placeName    String
+  about        String
+  status       HostStatus @default(PENDING)
+  appliedAt    DateTime   @default(now())
+  reviewedAt   DateTime?
+  reviewNote   String?
+
+  events Event[]
 }
 
 model Stop {
