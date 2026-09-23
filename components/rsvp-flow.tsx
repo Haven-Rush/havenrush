@@ -19,7 +19,14 @@ const INTENT_OPTIONS: { value: Intent; label: string }[] = [
   { value: "RENTING", label: "Renting" },
 ];
 
-export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
+export function RsvpFlow({
+  eventSlug,
+  priceCents = 0,
+}: {
+  eventSlug: string;
+  priceCents?: number;
+}) {
+  const isPaid = priceCents > 0;
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -33,12 +40,14 @@ export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
   if (step === 0) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-charcoal/8 bg-linen p-6">
-        <div className="font-serif text-[22px] font-bold">$0 Free Pass</div>
+        <div className="font-serif text-[22px] font-bold">
+          {isPaid ? `$${(priceCents / 100).toFixed(2)}` : "$0 Free Pass"}
+        </div>
         <button
           onClick={() => setStep(1)}
           className="rounded-full bg-sage px-7 py-[13px] text-sm font-bold text-linen hover:bg-sage-dark"
         >
-          Get Pass
+          {isPaid ? "Pay & Book" : "Get Pass"}
         </button>
       </div>
     );
@@ -51,7 +60,7 @@ export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
       setError(null);
       setSubmitting(true);
       try {
-        const res = await fetch("/api/rsvp", {
+        const res = await fetch(isPaid ? "/api/checkout" : "/api/rsvp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -66,6 +75,14 @@ export function RsvpFlow({ eventSlug }: { eventSlug: string }) {
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.error ?? "Something went wrong. Please try again.");
+        }
+        if (isPaid) {
+          // Full navigation to Stripe's hosted checkout -- there's no pass
+          // yet to store a token for. The webhook creates the Pass once
+          // payment actually completes; this tab picks back up on
+          // success_url (see app/api/checkout/route.ts).
+          window.location.href = data.checkoutUrl;
+          return;
         }
         // Persist immediately — don't wait for a passport-page visit that
         // might never happen (e.g. they close this tab from the "You're

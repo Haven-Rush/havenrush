@@ -1,7 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CONSENT_TEXT } from "@/lib/site-config";
+import { createOrUpdatePass, listingAgentIds } from "@/lib/create-pass";
 import type { Intent, Timeline } from "@prisma/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,61 +46,26 @@ export async function POST(request: Request) {
 
   const event = await prisma.event.findUnique({
     where: { slug: eventSlug },
-    include: { stops: { include: { agent: true } } },
+    include: { stops: true },
   });
   if (!event) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
+  if (event.priceCents > 0) {
+    return NextResponse.json(
+      { error: "This event requires payment — use /api/checkout instead" },
+      { status: 400 },
+    );
+  }
 
-  const pass = await prisma.$transaction(async (tx) => {
-    const attendee = await tx.attendee.upsert({
-      where: { email },
-      update: name ? { name } : {},
-      create: { email, name },
-    });
-
-    const consentedAt = agentContactConsent ? new Date() : null;
-    const upsertedPass = await tx.pass.upsert({
-      where: { attendeeId_eventId: { attendeeId: attendee.id, eventId: event.id } },
-      update: { intent, timeline, agentContactConsent, consentedAt, consentText: CONSENT_TEXT },
-      create: {
-        token: randomUUID(),
-        attendeeId: attendee.id,
-        eventId: event.id,
-        intent,
-        timeline,
-        agentContactConsent,
-        consentedAt,
-        consentText: CONSENT_TEXT,
-      },
-    });
-
-    // Consent before any lead leaves the system: only ever queue a
-    // LeadDelivery when the attendee explicitly opted in. No consent means
-    // no row is created at all, so there is nothing for a future dispatcher
-    // to send.
-    if (agentContactConsent) {
-      const agentIds = Array.from(
-        new Set(
-          event.stops
-            .filter((stop) => stop.kind === "LISTING" && stop.agentId)
-            .map((stop) => stop.agentId as string),
-        ),
-      );
-
-      for (const agentId of agentIds) {
-        const existing = await tx.leadDelivery.findFirst({
-          where: { passId: upsertedPass.id, agentId },
-        });
-        if (!existing) {
-          await tx.leadDelivery.create({
-            data: { passId: upsertedPass.id, agentId },
-          });
-        }
-      }
-    }
-
-    return upsertedPass;
+  const pass = await createOrUpdatePass({
+    eventId: event.id,
+    email,
+    name,
+    intent,
+    timeline,
+    agentContactConsent,
+    listingAgentIds: listingAgentIds(event.stops),
   });
 
   return NextResponse.json({ token: pass.token }, { status: 201 });

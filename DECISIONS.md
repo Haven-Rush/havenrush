@@ -1,5 +1,195 @@
 # Decisions & assumptions
 
+## Payments Phase 2b: checkout + webhooks (2026-09-23)
+`POST /api/checkout` (paid-event Checkout Session creation) and
+`POST /api/stripe/webhook` (the source of truth for paid bookings), per
+the plan approved in Phase 2a.
+
+### What's verified, and how -- since api.stripe.com is blocked here too
+Phase 2a found `api.stripe.com` blocked by this sandbox's network egress
+policy, same as `docs.stripe.com`. That rules out an actual Stripe API
+call from this sandbox, with any key -- so nothing that requires a real
+`checkout.session.create` or `accounts.retrieve` round trip could be
+exercised end-to-end here. What *could* be verified locally, and was,
+against a real (throwaway) Postgres:
+- **Routing & gating**: `/api/checkout` correctly returns 400 on a free
+  event, 409 when the event's host hasn't finished Stripe onboarding, 404
+  on an unknown event, 400 on missing fields/invalid email; `/api/rsvp`
+  now correctly refuses a priced event (400, "use /api/checkout instead")
+  while an unrelated free event still returns 201 exactly as before
+  (regression check on the shared-helper refactor, see below).
+- **Rate limiting**: confirmed the 10/min/IP limit on `/api/checkout` trips
+  after the configured count.
+- **Graceful failure when Stripe itself is unreachable**: with a fully-
+  onboarded test host, `/api/checkout` reaches the actual
+  `stripe.checkout.sessions.create` call, which fails against the blocked
+  host -- confirmed it now returns a clean `502` (`"Could not reach
+  Stripe..."`) rather than an uncaught exception, the same fix already
+  applied to the Connect action in Phase 2a.
+- **Webhook signature verification**: Stripe's signing scheme is pure local
+  HMAC (`stripe.webhooks.generateTestHeaderString`/`constructEvent` need no
+  network access), so this is fully testable here. Verified: a
+  correctly-signed synthetic payload is accepted (200); a garbage
+  signature and a missing `stripe-signature` header are both rejected
+  (400) without ever reaching any handler logic.
+- **Webhook handler logic, end-to-end, with synthetic-but-realistic
+  payloads**: built a `PENDING` `Payment` row by hand, then sent signed
+  `checkout.session.expired` (row flips to `EXPIRED`),
+  `checkout.session.completed` with full metadata (creates the
+  Attendee/Pass/LeadDelivery exactly like a free RSVP would, marks the
+  `Payment` `PAID` with the real `passId`/`stripePaymentIntentId`),
+  `account.updated` (syncs `Host.stripeChargesEnabled`/
+  `stripePayoutsEnabled`), and `charge.refunded` (moves the same row to
+  `REFUNDED`) -- and checked the resulting rows directly in Postgres after
+  each one.
+
+### What's still unverified against the real Vercel deployment
+Everything that actually talks to `api.stripe.com`: a real
+`checkout.session.create` call (line items, `application_fee_amount`,
+`transfer_data.destination` actually accepted by Stripe), the real
+Checkout page rendering and completing a card payment, Stripe actually
+delivering `checkout.session.completed` to the live webhook URL with a
+real signature from a real webhook signing secret, and a real destination
+charge + application fee showing up correctly split between the platform
+and connected accounts in the Stripe Dashboard. Same category of gap as
+the format-rename phase, which needed the live Vercel preview to confirm
+production data -- this needs a live deployment with `STRIPE_SECRET_KEY`/
+`STRIPE_WEBHOOK_SECRET` configured and a webhook destination pointed at
+`/api/stripe/webhook` (or `stripe listen --forward-to` against a preview
+URL) to actually confirm.
+
+### `/api/rsvp` refactored to share `lib/create-pass.ts` with the webhook
+The Attendee/Pass upsert + consent-gated `LeadDelivery` loop is the same
+logic for a free RSVP and a paid booking's webhook -- extracted rather
+than duplicated, so a future change to consent/lead-delivery handling
+(a product-rule-sensitive concern) can't drift between two copies.
+Verified behaviorally identical to the pre-refactor version: the same
+free-event RSVP call that worked before still returns 201, and a
+consenting RSVP against an event with two distinct listing agents still
+queues exactly two `LeadDelivery` rows. Also dropped `/api/rsvp`'s
+`stops: { include: { agent: true } }` down to `stops: true` while touching
+that query -- the `agent` relation was never actually read, only
+`stop.agentId` (a plain scalar already on `Stop`).
+
+### `/api/rsvp` now also refuses a priced event
+Added a `priceCents > 0` guard returning 400. Without it, someone could
+bypass Checkout entirely and get a free Pass to a paid event by hitting
+the free endpoint directly with the right `eventSlug`.
+
+### RSVP fields travel through Checkout Session `metadata`, never a pre-created DB row of their own
+Confirmed workable as designed in Phase 2a: `POST /api/checkout` puts
+`eventId`/`email`/`name`/`intent`/`timeline`/`agentContactConsent` in the
+Session's `metadata`, and `checkout.session.completed` reads them back to
+build the `Attendee`/`Pass` it creates. `Payment` never carries them.
+
+### Webhook idempotency: upserts and guarded `updateMany`s, no processed-event-id table
+`checkout.session.completed` upserts `Payment` by its unique
+`stripeCheckoutSessionId` and `Pass` by its unique `attendeeId_eventId` --
+a Stripe redelivery of the same event just re-applies the same write.
+`checkout.session.expired`/`async_payment_failed` and `charge.refunded`
+use `updateMany` with a `status: PENDING` guard (or no guard, for refunds,
+since a charge can only be refunded once in the cases this handles) so a
+missing row is a safe no-op and an out-of-order delivery can't regress an
+already-`PAID` row back to `EXPIRED`. Same "idempotent by construction"
+approach already used elsewhere in this codebase (`POST /api/stamps/scan`,
+`prisma/seed-runner.ts`) rather than a new dedicated dedup mechanism.
+
+### Not built this phase: admin-triggered refunds, post-payment passport retrieval
+Two things flagged rather than silently added, since only
+`POST /api/checkout`/`POST /api/stripe/webhook` were asked for this round:
+- The actual "admin clicks a button to refund" action (Phase 2a's plan
+  covered *how* a refund should behave -- `reverse_transfer`,
+  `refund_application_fee: true` -- but no UI/action triggers one yet).
+  `charge.refunded` is handled regardless, so a refund issued directly in
+  the Stripe Dashboard still syncs `Payment.status` correctly today.
+- After a successful payment, the browser lands back on the event page
+  with no pass token in hand (unlike free RSVP, where the client gets one
+  synchronously) -- the Pass only exists once the webhook fires. Nothing
+  today maps that returning visitor to their new passport link; that
+  needs its own small lookup (e.g. keyed on the Checkout Session id in the
+  success URL) as a follow-up, not invented silently here.
+
+## Payments Phase 2a: schema + Stripe Connect (Express) onboarding (2026-09-23)
+Stripe's own plugin/skill installation was unavailable in this sandbox (no
+`claude-plugins-official` marketplace configured, and `docs.stripe.com` is
+blocked by this session's network egress policy — confirmed via the proxy
+status endpoint, a policy denial, not a transient failure). Per explicit
+instruction, drafted the integration plan from general Stripe Connect
+knowledge instead (destination charges, Express onboarding, `Payment` as
+the table name, commission as an env var, refunds reversing the
+application fee by default) and built this phase against it: schema +
+migration + the Express onboarding flow only. Checkout and webhooks are
+the next phase, stopped here for review as asked.
+
+### `api.stripe.com` is also blocked from this sandbox -- found by actually clicking the button, not assumed
+Same network policy that blocks `docs.stripe.com` also blocks
+`api.stripe.com` ("Host not in allowlist... Add this host to your network
+egress settings"). This surfaced as a real, uncaught `StripeAPIError`
+crashing `connectStripe()` to Next.js's default error page when the flow
+was exercised end-to-end with Playwright -- not a placeholder-key auth
+error as expected, a proxy-level block that would happen with a real key
+too. Since a Stripe outage or transient network issue is a real production
+possibility (not just a sandbox artifact), wrapped the account/account-link
+creation in a try/catch that redirects to `/host?stripeError=1` with a
+friendly message, rather than leaving the crash path in "because it can't
+be tested here anyway." This was caught and fixed within this same
+phase, not deferred.
+
+**Consequence for later phases:** this sandbox cannot make a real
+`api.stripe.com` call at all, with any key. Phase 2b (checkout + webhooks)
+will need real verification some other way -- a live deployment with
+webhook delivery logs, or valid test keys run from an environment that
+isn't blocked, not something I can confirm end-to-end from here.
+
+### `priceCents` is `Int NOT NULL @default(0)`, not nullable
+The original prompt language said "nullable/0 = free" -- collapsed to a
+single non-null column defaulting to 0. Two representations of the same
+"free" state (`null` and `0`) would mean every read site needs to treat
+both as equivalent; a plain `0` default is unambiguous everywhere and
+matches how `CLAUDE.md`'s pricing model actually talks about it ("$0 is a
+valid price").
+
+### `Payment` doesn't duplicate RSVP fields (email/intent/timeline/consent)
+Those already live on `Pass`/`Attendee`. A `Payment` row exists from the
+moment a Checkout Session is created (`PENDING`, before anyone's paid) up
+through the webhook that creates the actual `Pass` -- so at creation time
+there's no `Pass` yet to attach RSVP data to. Rather than stage that data
+in new `Payment` columns, the plan carries it in the Checkout Session's own
+`metadata` and reads it back out in the webhook handler when the `Pass` is
+finally created. `Payment` stays purely financial: Stripe ids, amounts,
+status.
+
+### `Host.stripeAccountId`/`stripeChargesEnabled`/`stripePayoutsEnabled`, both booleans required
+Stripe can flip `charges_enabled` and `payouts_enabled` independently (an
+account can take payments before payouts clear, or vice versa) -- a host
+needs both true before publishing a paid event, so both are stored rather
+than collapsing to one "onboarded" flag that would hide which one is
+actually blocking them.
+
+### Express-onboarding return page does one direct `accounts.retrieve()`, not just a redirect
+The `account.updated` webhook (next phase) is the real ongoing source of
+truth for onboarding status changes after the fact. But without it built
+yet, the only way to make this phase testable end-to-end was to have
+`/host/stripe/return` fetch current status directly and sync it right
+there. This is explicitly a stand-in for the webhook, not a replacement --
+once `account.updated` exists, both paths update the same two columns and
+neither depends on the other.
+
+### `getCurrentHost()` extracted, but the existing `/host` page's original cookie-lookup code was replaced with it
+The Phase 1 `/host` page inlined `cookies()` + `getHostIdFromSessionCookieValue` +
+`getHostById` directly. That exact lookup was needed again for the new
+Stripe return page and action, so factored it into `lib/current-host.ts`
+and pointed the existing page at it too (behaviorally identical -- verified
+via the same Playwright flow) rather than leaving a third copy of the same
+four lines.
+
+### First real use of `NEXT_PUBLIC_SITE_URL`
+CLAUDE.md has required this var since Phase 1 (for QR code URLs), but
+nothing in the codebase actually read it before now -- not even
+`.env.example` documented it. Stripe Account Links require fully-qualified
+`https://` redirect URLs, so this is the first code path that needs it;
+added it to `.env.example` along with `STRIPE_SECRET_KEY`.
+
 ## Rename event formats; browse-first homepage; copy audit (2026-09-24)
 Renamed the four `EventType` values (see the migration's own commit message
 for the mechanics) and rebuilt the homepage to be browse-first per an
