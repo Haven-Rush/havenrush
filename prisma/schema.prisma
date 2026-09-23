@@ -73,6 +73,14 @@ enum EventStatus {
   REJECTED
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
 model Attendee {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -111,11 +119,17 @@ model Event {
   // Not yet read by any visibility check -- see Host model's doc comment.
   hostId       String?
   status       EventStatus   @default(PUBLISHED)
+  // 0 = free (the only value every event has today). Not nullable -- "0
+  // means free" is unambiguous everywhere this is read, so there's no
+  // separate null-vs-zero case to handle. See CLAUDE.md "Pricing model".
+  priceCents   Int           @default(0)
+  currency     String        @default("usd")
 
   host     Host?     @relation(fields: [hostId], references: [id], onDelete: SetNull)
   stops    Stop[]
   sponsors Sponsor[]
   passes   Pass[]
+  payments Payment[]
 
   @@index([hostId])
 }
@@ -126,20 +140,29 @@ model Event {
 // experience-creation dashboard, the per-experience approval queue, and
 // wiring Event.status into what the public site shows are later phases.
 model Host {
-  id           String     @id @default(cuid())
-  name         String
-  email        String     @unique
-  passwordHash String
+  id                   String     @id @default(cuid())
+  name                 String
+  email                String     @unique
+  passwordHash         String
   // What they're applying to host with -- not in the original Phase 1 spec's
   // field list, but the application form it also specifies ("what
   // place/business, brief description") needs somewhere to land for the
   // admin approval queue to actually review. See DECISIONS.md.
-  placeName    String
-  about        String
-  status       HostStatus @default(PENDING)
-  appliedAt    DateTime   @default(now())
-  reviewedAt   DateTime?
-  reviewNote   String?
+  placeName            String
+  about                String
+  status               HostStatus @default(PENDING)
+  appliedAt            DateTime   @default(now())
+  reviewedAt           DateTime?
+  reviewNote           String?
+  // Stripe Connect (Express) -- see DECISIONS.md's payments-Phase-2 entry.
+  // Both booleans must be true before this host may publish a PAID event;
+  // free events never check them. Synced from Stripe's account.updated
+  // webhook once that's built (next phase) -- the Express-onboarding
+  // return page also does one direct accounts.retrieve() sync so this
+  // phase is independently testable without the webhook existing yet.
+  stripeAccountId      String?
+  stripeChargesEnabled Boolean    @default(false)
+  stripePayoutsEnabled Boolean    @default(false)
 
   events Event[]
 }
@@ -191,8 +214,41 @@ model Pass {
   event          Event          @relation(fields: [eventId], references: [id])
   stamps         Stamp[]
   leadDeliveries LeadDelivery[]
+  payment        Payment?
 
   @@unique([attendeeId, eventId])
+}
+
+// The financial record behind a PAID booking (see CLAUDE.md "Pricing
+// model" and DECISIONS.md's payments-Phase-2 entry). A row is created
+// PENDING the moment a Checkout Session exists, before anyone has paid --
+// `passId` is only set once the checkout.session.completed webhook (next
+// phase) creates the Pass. Free events never create a Payment row at all.
+// Deliberately doesn't duplicate RSVP fields (email/intent/timeline/
+// consent) -- those travel in the Checkout Session's own metadata and get
+// read back by the webhook to build the Attendee/Pass; this table is
+// financial state only.
+model Payment {
+  id                      String        @id @default(cuid())
+  eventId                 String
+  passId                  String?       @unique
+  stripeCheckoutSessionId String        @unique
+  stripePaymentIntentId   String?       @unique
+  // The connected account funds were destined to, captured at charge
+  // time -- Host.stripeAccountId could theoretically change later, so
+  // this row should reflect what actually happened, not what's current.
+  hostStripeAccountId     String
+  amountCents             Int
+  applicationFeeCents     Int
+  currency                String
+  status                  PaymentStatus @default(PENDING)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id])
+  pass  Pass? @relation(fields: [passId], references: [id])
+
+  @@index([eventId])
 }
 
 model Stamp {

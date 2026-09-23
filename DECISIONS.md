@@ -1,5 +1,86 @@
 # Decisions & assumptions
 
+## Payments Phase 2a: schema + Stripe Connect (Express) onboarding (2026-09-23)
+Stripe's own plugin/skill installation was unavailable in this sandbox (no
+`claude-plugins-official` marketplace configured, and `docs.stripe.com` is
+blocked by this session's network egress policy — confirmed via the proxy
+status endpoint, a policy denial, not a transient failure). Per explicit
+instruction, drafted the integration plan from general Stripe Connect
+knowledge instead (destination charges, Express onboarding, `Payment` as
+the table name, commission as an env var, refunds reversing the
+application fee by default) and built this phase against it: schema +
+migration + the Express onboarding flow only. Checkout and webhooks are
+the next phase, stopped here for review as asked.
+
+### `api.stripe.com` is also blocked from this sandbox -- found by actually clicking the button, not assumed
+Same network policy that blocks `docs.stripe.com` also blocks
+`api.stripe.com` ("Host not in allowlist... Add this host to your network
+egress settings"). This surfaced as a real, uncaught `StripeAPIError`
+crashing `connectStripe()` to Next.js's default error page when the flow
+was exercised end-to-end with Playwright -- not a placeholder-key auth
+error as expected, a proxy-level block that would happen with a real key
+too. Since a Stripe outage or transient network issue is a real production
+possibility (not just a sandbox artifact), wrapped the account/account-link
+creation in a try/catch that redirects to `/host?stripeError=1` with a
+friendly message, rather than leaving the crash path in "because it can't
+be tested here anyway." This was caught and fixed within this same
+phase, not deferred.
+
+**Consequence for later phases:** this sandbox cannot make a real
+`api.stripe.com` call at all, with any key. Phase 2b (checkout + webhooks)
+will need real verification some other way -- a live deployment with
+webhook delivery logs, or valid test keys run from an environment that
+isn't blocked, not something I can confirm end-to-end from here.
+
+### `priceCents` is `Int NOT NULL @default(0)`, not nullable
+The original prompt language said "nullable/0 = free" -- collapsed to a
+single non-null column defaulting to 0. Two representations of the same
+"free" state (`null` and `0`) would mean every read site needs to treat
+both as equivalent; a plain `0` default is unambiguous everywhere and
+matches how `CLAUDE.md`'s pricing model actually talks about it ("$0 is a
+valid price").
+
+### `Payment` doesn't duplicate RSVP fields (email/intent/timeline/consent)
+Those already live on `Pass`/`Attendee`. A `Payment` row exists from the
+moment a Checkout Session is created (`PENDING`, before anyone's paid) up
+through the webhook that creates the actual `Pass` -- so at creation time
+there's no `Pass` yet to attach RSVP data to. Rather than stage that data
+in new `Payment` columns, the plan carries it in the Checkout Session's own
+`metadata` and reads it back out in the webhook handler when the `Pass` is
+finally created. `Payment` stays purely financial: Stripe ids, amounts,
+status.
+
+### `Host.stripeAccountId`/`stripeChargesEnabled`/`stripePayoutsEnabled`, both booleans required
+Stripe can flip `charges_enabled` and `payouts_enabled` independently (an
+account can take payments before payouts clear, or vice versa) -- a host
+needs both true before publishing a paid event, so both are stored rather
+than collapsing to one "onboarded" flag that would hide which one is
+actually blocking them.
+
+### Express-onboarding return page does one direct `accounts.retrieve()`, not just a redirect
+The `account.updated` webhook (next phase) is the real ongoing source of
+truth for onboarding status changes after the fact. But without it built
+yet, the only way to make this phase testable end-to-end was to have
+`/host/stripe/return` fetch current status directly and sync it right
+there. This is explicitly a stand-in for the webhook, not a replacement --
+once `account.updated` exists, both paths update the same two columns and
+neither depends on the other.
+
+### `getCurrentHost()` extracted, but the existing `/host` page's original cookie-lookup code was replaced with it
+The Phase 1 `/host` page inlined `cookies()` + `getHostIdFromSessionCookieValue` +
+`getHostById` directly. That exact lookup was needed again for the new
+Stripe return page and action, so factored it into `lib/current-host.ts`
+and pointed the existing page at it too (behaviorally identical -- verified
+via the same Playwright flow) rather than leaving a third copy of the same
+four lines.
+
+### First real use of `NEXT_PUBLIC_SITE_URL`
+CLAUDE.md has required this var since Phase 1 (for QR code URLs), but
+nothing in the codebase actually read it before now -- not even
+`.env.example` documented it. Stripe Account Links require fully-qualified
+`https://` redirect URLs, so this is the first code path that needs it;
+added it to `.env.example` along with `STRIPE_SECRET_KEY`.
+
 ## Rename event formats; browse-first homepage; copy audit (2026-09-24)
 Renamed the four `EventType` values (see the migration's own commit message
 for the mechanics) and rebuilt the homepage to be browse-first per an

@@ -1,7 +1,6 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getHostIdFromSessionCookieValue, HOST_SESSION_COOKIE } from "@/lib/host-auth";
-import { getHostById } from "@/lib/hosts-db";
+import { getCurrentHost } from "@/lib/current-host";
+import { connectStripe } from "./stripe/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -9,13 +8,16 @@ export const metadata = {
   title: "Host Dashboard | Haven Rush",
 };
 
-export default async function HostHomePage() {
-  const cookieStore = await cookies();
-  const hostId = getHostIdFromSessionCookieValue(cookieStore.get(HOST_SESSION_COOKIE)?.value);
-  const host = hostId ? await getHostById(hostId) : null;
+export default async function HostHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stripeError?: string }>;
+}) {
+  const host = await getCurrentHost();
   if (!host) {
     redirect("/host/login");
   }
+  const { stripeError } = await searchParams;
 
   return (
     <div>
@@ -34,10 +36,40 @@ export default async function HostHomePage() {
         </StatusCard>
       )}
       {host.status === "APPROVED" && (
-        <StatusCard tone="approved" title="You're approved!">
-          Experience creation is coming soon — this is where you&apos;ll build your first Haven
-          Rush event.
-        </StatusCard>
+        <>
+          <StatusCard tone="approved" title="You're approved!">
+            Experience creation is coming soon — this is where you&apos;ll build your first Haven
+            Rush event.
+          </StatusCard>
+
+          <div className="mt-5 rounded-2xl border border-charcoal/10 bg-white p-6">
+            <h2 className="mb-2 font-serif text-lg font-bold">Get paid</h2>
+            {host.stripeChargesEnabled && host.stripePayoutsEnabled ? (
+              <p className="m-0 text-[14px] font-bold text-sage">Stripe connected ✓</p>
+            ) : (
+              <>
+                <p className="mb-4 text-[14px] leading-relaxed text-charcoal/70">
+                  {host.stripeAccountId
+                    ? "Your Stripe onboarding isn't finished yet — you'll need it complete before publishing a paid experience. Free experiences don't require this."
+                    : "Connect a Stripe account so you can charge for experiences later. Free experiences don't require this."}
+                </p>
+                {stripeError && (
+                  <p className="mb-4 text-[13px] font-semibold text-red-700">
+                    We couldn&apos;t reach Stripe just now. Please try again in a moment.
+                  </p>
+                )}
+                <form action={connectStripe}>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-sage px-6 py-3 text-sm font-bold text-linen hover:bg-sage-dark"
+                  >
+                    {host.stripeAccountId ? "Finish Stripe onboarding" : "Connect with Stripe"}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

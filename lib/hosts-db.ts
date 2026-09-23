@@ -45,3 +45,25 @@ export function reviewHostApplication(
     data: { status, reviewedAt: new Date(), reviewNote },
   });
 }
+
+export function setHostStripeAccountId(id: string, stripeAccountId: string) {
+  return prisma.host.update({
+    where: { id },
+    data: { stripeAccountId },
+  });
+}
+
+/** Synced from Stripe (either the account.updated webhook, once built, or a
+ * direct accounts.retrieve() call right after onboarding returns). */
+export function setHostStripeCapabilities(
+  id: string,
+  capabilities: { chargesEnabled: boolean; payoutsEnabled: boolean },
+) {
+  return prisma.host.update({
+    where: { id },
+    data: {
+      stripeChargesEnabled: capabilities.chargesEnabled,
+      stripePayoutsEnabled: capabilities.payoutsEnabled,
+    },
+  });
+}
