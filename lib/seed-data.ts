@@ -52,7 +52,7 @@ export const EVENTS: SeedEvent[] = [
     id: "evt-south-congress-hunt",
     slug: "south-congress-tasting-hunt",
     title: "South Congress Tasting Hunt",
-    type: "HOME_HUNT",
+    type: "HUNT",
     purpose: "SALE",
     neighborhood: "South Congress",
     city: "Austin",
@@ -168,7 +168,7 @@ export const EVENTS: SeedEvent[] = [
     id: "evt-elizabeth-st-social",
     slug: "elizabeth-st-social",
     title: "The Elizabeth St Social",
-    type: "HOUSE_PARTY",
+    type: "GATHER",
     purpose: "SALE",
     neighborhood: "Bouldin Creek",
     city: "Austin",
@@ -204,8 +204,8 @@ export const EVENTS: SeedEvent[] = [
   {
     id: "evt-austin-open-house-weekend",
     slug: "austin-open-house-weekend",
-    title: "Austin Open House Weekend",
-    type: "OPEN_HOUSE_WEEKEND",
+    title: "Austin Explore Weekend",
+    type: "EXPLORE",
     purpose: "SALE",
     neighborhood: "Citywide",
     city: "Austin",
@@ -214,7 +214,7 @@ export const EVENTS: SeedEvent[] = [
     endsAt: "2026-11-08T17:00:00-06:00",
     dateLabel: "Nov 7–8 · Citywide",
     description:
-      "A weekend-long, citywide open house: visit participating homes across Austin at your own pace, scan in at each one, and fill your passport for prizes.",
+      "A weekend-long, citywide scavenger hunt: visit participating places across Austin at your own pace, scan in at each one, and fill your passport for prizes.",
     rewardTiers: [
       { stops: 3, reward: "Weekend tote bag" },
       { stops: 5, reward: "Prize drawing entry" },
@@ -280,7 +280,7 @@ export const EVENTS: SeedEvent[] = [
     id: "evt-hyde-park-porch-hunt",
     slug: "hyde-park-porch-hunt",
     title: "Hyde Park Porch Hunt",
-    type: "HOME_HUNT",
+    type: "HUNT",
     purpose: "SALE",
     neighborhood: "Hyde Park",
     city: "Austin",
@@ -332,7 +332,7 @@ export const EVENTS: SeedEvent[] = [
     id: "evt-willow-creek-market",
     slug: "sunday-market-at-willow-creek",
     title: "Sunday Market at Willow Creek",
-    type: "HOME_FAIR",
+    type: "MARKET",
     // Model homes showcase the builder's available floor plans rather than
     // being individually for sale themselves -- SHOWCASE, not SALE.
     purpose: "SHOWCASE",

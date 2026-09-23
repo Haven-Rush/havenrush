@@ -2,41 +2,38 @@
  * Canonical event-type vocabulary. Change labels/copy here only — every
  * page reads from this file instead of hardcoding strings.
  *
- * Naming note: HOME_HUNT was previously "Home Crawl" in the mockup UI; the
- * brand doc and business plan always called it "Home Hunt". We now follow
- * the brand doc's label everywhere (see DECISIONS.md).
+ * Naming note: these were House Party / Home Hunt / Open House Weekend /
+ * Home Fair. Renamed to Gather / Hunt / Explore / Market -- short,
+ * distinct verbs/nouns with no repeated prefix, none of them real-estate-
+ * specific on their own (see CLAUDE.md "Vocabulary" and DECISIONS.md).
  */
 export const EVENT_TYPES = {
-  HOUSE_PARTY: {
-    label: "House Party",
+  GATHER: {
+    label: "Gather",
     tagline: "One property. Local coffee. Live music. Good company.",
   },
-  HOME_HUNT: {
-    label: "Home Hunt",
-    tagline: "Walk a handful of properties in an afternoon, with local food stops along the way.",
+  HUNT: {
+    label: "Hunt",
+    tagline: "Walk a handful of places in an afternoon, with local food stops along the way.",
   },
-  OPEN_HOUSE_WEEKEND: {
-    label: "Open House Weekend",
-    tagline: "A whole weekend, homes across town, one passport. Go at your own pace and collect stamps.",
-  },
-  HOME_FAIR: {
-    label: "Home Fair",
+  EXPLORE: {
+    label: "Explore",
     tagline:
-      "A builder's new neighborhood, opened up like a market. Tour model homes, meet local makers, and collect stamps.",
+      "A whole weekend, places across town, one passport. Go at your own pace and collect stamps.",
+  },
+  MARKET: {
+    label: "Market",
+    tagline:
+      "A builder's new neighborhood, opened up like a market. Tour model spaces, meet local makers, and collect stamps.",
   },
 } as const;
 
 export type EventType = keyof typeof EVENT_TYPES;
 
-// Order also drives the home page: everything but HOME_FAIR gets a main
-// card; HOME_FAIR gets its own smaller "For builders" card (see
+// Order also drives the home page: everything but MARKET gets a main
+// card; MARKET gets its own smaller "For builders" card (see
 // app/(site)/page.tsx).
-export const EVENT_TYPE_ORDER: EventType[] = [
-  "HOUSE_PARTY",
-  "HOME_HUNT",
-  "OPEN_HOUSE_WEEKEND",
-  "HOME_FAIR",
-];
+export const EVENT_TYPE_ORDER: EventType[] = ["GATHER", "HUNT", "EXPLORE", "MARKET"];
 
 export const STOP_KINDS = {
   LISTING: { label: "Place" },
