@@ -66,7 +66,7 @@ export default async function EventDetailPage({
         <Stat label="Reward" value={topReward(event) ?? "—"} accent />
       </div>
 
-      <RsvpFlow eventSlug={event.slug} />
+      <RsvpFlow eventSlug={event.slug} priceCents={event.priceCents} />
     </section>
   );
 }
