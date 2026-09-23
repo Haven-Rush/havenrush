@@ -5,7 +5,7 @@ import { formatEventDateLabel, listEvents } from "@/lib/events-db";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Upcoming hunts | Haven Rush",
+  title: "Upcoming events | Haven Rush",
 };
 
 export default async function EventsPage() {
@@ -13,7 +13,7 @@ export default async function EventsPage() {
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 sm:px-8">
-      <h1 className="mb-9 font-serif text-[clamp(26px,3.6vw,36px)] font-bold">Upcoming hunts</h1>
+      <h1 className="mb-9 font-serif text-[clamp(26px,3.6vw,36px)] font-bold">Upcoming events</h1>
       <div className="flex flex-col">
         {events.map((event, index) => (
           <div

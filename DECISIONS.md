@@ -1,5 +1,92 @@
 # Decisions & assumptions
 
+## Rename event formats; browse-first homepage; copy audit (2026-09-24)
+Renamed the four `EventType` values (see the migration's own commit message
+for the mechanics) and rebuilt the homepage to be browse-first per an
+earlier, previously-unbuilt request (search/filter bar at the top, an
+immediate event grid, brand story out of the way). Also re-read the actual
+rendered pages (not just grep) for real-estate assumptions in meaning, not
+just literal old-name strings.
+
+### Filter chips are the four format types, not the earlier brief's hypothetical categories
+An earlier, unbuilt version of this homepage request suggested chips like
+"Homes & Hunts" / "Hotels & Stays" / "Coworking" / "Local & Destinations" --
+broader categories meant to signal the platform covers more than real
+estate. Nothing in the data model backs those groupings: there's only
+`EventType` (the four formats) and `EventPurpose` (real-estate-specific,
+optional). Per the explicit "don't invent new backend categories yet"
+constraint, the chips are "All" + the four actual format labels (Gather,
+Hunt, Explore, Market) -- a real filter over real data, not a preview of
+groupings that don't exist yet. `/agents`' "Coworking, Hotels & Venues"
+package already models how a non-real-estate host fits in today: they use
+the existing Gather/Hunt formats on their own space, not a new category.
+
+### Search/filter is client-side over a Server Component's data, not `/api/events`
+The homepage (`app/(site)/page.tsx`) is a Server Component that calls
+`listEvents()` directly (same pattern as `/events`, `/events/[slug]` --
+see the "Query helpers instead of routes calling routes" entry below) and
+hands the result to `HomeBrowse`, a client component that filters in
+memory as the visitor types/clicks. `/api/events` is untouched and still
+serves external/future consumers; the homepage was never calling it, so
+there was no round trip to remove.
+
+### Cards always say "Free to attend" -- there's no price field yet
+CLAUDE.md's Pricing model section describes a future host-set price, but
+no `priceCents` (or equivalent) column exists on `Event` yet -- that's
+unbuilt payments work, explicitly out of scope here. Every event today is
+free to attend (CLAUDE.md: "Attendees get in free"), so the card's price
+slot is a static "Free to attend" rather than a placeholder that implies
+pricing exists. Revisit this the moment a real price field ships.
+
+### Card photo is a placeholder pattern, not a repeated type label
+First pass put the type name inside the placeholder image box too, which
+just repeated the badge already shown below it -- caught this in my own
+screenshot review and swapped it for a plain diagonal-stripe pattern
+(`aria-hidden`, decorative). `Event` has no image field yet, so every card
+uses the same placeholder; a real photo field is future work.
+
+### Brand story moved to the footer, not a new /about page
+Chose a short paragraph in `SiteFooter` (with a `Partner with us` link to
+`/agents`) over a dedicated `/about` route -- the story is a few sentences,
+not enough content to justify its own page and nav entry right now, and it
+still needs to appear on every page (footer already does that). Revisit
+if the story grows.
+
+### `/events`' heading: "Upcoming hunts" -> "Upcoming events"
+Caught reading the rendered page, not grepping: this heading (and its
+`<title>`) called every event a "hunt" even before this rename, and now
+that Gather/Explore/Market are clearly distinct names from Hunt, a Market
+or Gather event showing up under "Upcoming hunts" reads as wrong, not just
+imprecise. `CLAUDE.md`'s "Button/route copy: 'Find a Hunt.'" note pins that
+specific phrase (the header/homepage CTA), which is untouched -- this is a
+different string it doesn't mention.
+
+### `/agents` headline: "neighborhood event" -> "experience people show up for"
+Same read-for-meaning pass: "Turn your place into a neighborhood event"
+frames every host's event as a neighborhood/residential thing, which doesn't
+fit a hotel or coworking host `/agents`' own "Coworking, Hotels & Venues"
+package is pitching to. Swapped "neighborhood event" for "experience," which
+is also the word CLAUDE.md's own Platform-model section uses throughout.
+
+### Event id/slug left unchanged for the retitled event
+`austin-open-house-weekend` stays the slug and internal seed `id` for the
+event now titled "Austin Explore Weekend" -- neither is user-facing copy
+(the slug is a URL segment nobody reads as a sentence, matching CLAUDE.md's
+own product rule that pass/pass-adjacent URLs are opaque tokens, not
+copy), and changing a slug is a real breaking change (any bookmarked/shared
+`/events/austin-open-house-weekend` link) that nothing in this request
+asked for. Only asked-for full replacement candidate.
+
+### Migration must write the fixed title itself, not rely on reseeding
+`SEED_ON_BUILD` is unset in Vercel by default (see the entry below on why
+it was removed) -- so a schema-only migration would rename the enum in
+production but leave the literal string "Austin Open House Weekend"
+sitting in the `title` column until someone manually reseeds. Put the
+`UPDATE` directly in the migration's SQL instead (guarded on the old
+title, so it no-ops if an admin already edited it by hand) -- this is the
+one path guaranteed to run via `prisma migrate deploy` on every deploy,
+seed flag or not.
+
 ## CLAUDE.md replaced; host platform Phase 1 (2026-09-23)
 Attachments carrying the actual instructions kept arriving as a stale
 `PROMPT_payments.md` in this session (twice), so the user pasted the real

@@ -18,10 +18,10 @@ datasource db {
 }
 
 enum EventType {
-  HOUSE_PARTY
-  HOME_HUNT
-  OPEN_HOUSE_WEEKEND
-  HOME_FAIR
+  GATHER
+  HUNT
+  EXPLORE
+  MARKET
 }
 
 // Optional real estate purpose an event can state -- separate from
